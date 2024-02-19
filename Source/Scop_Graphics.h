@@ -23,6 +23,9 @@ struct Mesh
 
 bool LoadMeshFromObjFile (const char *filename, Mesh *mesh);
 
+extern VkInstance g_vk_instance;
+extern VkPhysicalDevice g_vk_physical_device;
+
 bool GfxInitVulkan (GLFWwindow *window);
 
 #endif

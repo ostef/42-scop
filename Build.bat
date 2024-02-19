@@ -17,7 +17,11 @@ where /Q cl.exe || (
 	call "!VS!\VC\Auxiliary\Build\vcvarsall.bat" amd64 || exit /b 1
 )
 
-set source_files=Source\main.cpp Source\Scop_Math.cpp Source\Scop_Graphics.cpp
+set source_files=Source\main.cpp ^
+    Source\math.cpp ^
+    Source\vulkan_backend.cpp ^
+    Source\obj_file.cpp
+
 set output_filename=Scop.exe
 
 set compiler_flags= -nologo -Oi -Od -Zi -FC
