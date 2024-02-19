@@ -8,8 +8,11 @@
 VkInstance g_vk_instance {};
 VkPhysicalDevice g_vk_physical_device = VK_NULL_HANDLE;
 int g_vk_graphics_queue_index = -1;
+int g_vk_present_queue_index = -1;
 VkDevice g_vk_device = VK_NULL_HANDLE;
 VkQueue g_vk_graphics_queue = VK_NULL_HANDLE;
+VkQueue g_vk_present_queue = VK_NULL_HANDLE;
+VkSurfaceKHR g_vk_surface = VK_NULL_HANDLE;
 
 static const char *Vulkan_Validation_Layers[] = {
     "VK_LAYER_KHRONOS_validation"
@@ -184,8 +187,10 @@ static void PrintVulkanDeviceProperties (
     printf ("    shaderFloat64: %s\n", feats.shaderFloat64 ? "true" : "false");
 }
 
-static int GetVulkanDeviceSuitabilityScore (VkPhysicalDevice device, int *graphics_queue_index)
+static int GetVulkanDeviceSuitabilityScore (VkPhysicalDevice device, int *graphics_queue_index, int *present_queue_index)
 {
+    Assert (graphics_queue_index != null && present_queue_index != null, "Null parameters");
+
     int score = 1;
 
     VkPhysicalDeviceProperties device_properties {};
@@ -200,29 +205,34 @@ static int GetVulkanDeviceSuitabilityScore (VkPhysicalDevice device, int *graphi
     VkQueueFamilyProperties *queue_families = (VkQueueFamilyProperties *)malloc (sizeof (VkQueueFamilyProperties) * queue_family_count);
     vkGetPhysicalDeviceQueueFamilyProperties (device, &queue_family_count, queue_families);
 
+    if (device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+        score += 1000;
+
     *graphics_queue_index = -1;
+    *present_queue_index = -1;
     for (int i = 0; i < queue_family_count; i += 1)
     {
         if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
             *graphics_queue_index = i;
-            break;
         }
+
+        VkBool32 present_support = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR (device, i, g_vk_surface, &present_support);
+
+        if (present_support)
+            *present_queue_index = i;
     }
 
-    if (*graphics_queue_index == -1)
-    {
-        PrintVulkanDeviceProperties (device_properties, device_features);
-        printf ("  Device is unsuitable\n\n", score);
-
-        return 0;
-    }
-
-    if (device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-        score += 1000;
+    if (*graphics_queue_index == -1 || *present_queue_index == -1)
+        score = 0;
 
     PrintVulkanDeviceProperties (device_properties, device_features);
-    printf ("  Suitability score: %d\n\n", score);
+
+    if (score == 0)
+        printf ("  Device is unsuitable\n\n");
+    else
+        printf ("  Suitability score: %d\n\n", score);
 
     return score;
 }
@@ -248,12 +258,13 @@ static bool ChooseVulkanPhysicalDevice ()
     int suitability_score = 0;
     for (int i = 0; i < device_count; i += 1)
     {
-        int graphics_queue_index;
-        int score = GetVulkanDeviceSuitabilityScore (available_devices[i], &graphics_queue_index);
+        int graphics_queue_index, present_queue_index;
+        int score = GetVulkanDeviceSuitabilityScore (available_devices[i], &graphics_queue_index, &present_queue_index);
         if (score > suitability_score)
         {
             device = available_devices[i];
             g_vk_graphics_queue_index = graphics_queue_index;
+            g_vk_present_queue_index = present_queue_index;
             suitability_score = score;
         }
     }
@@ -276,19 +287,32 @@ static bool ChooseVulkanPhysicalDevice ()
 
 static bool InitVulkanDeviceAndQueues ()
 {
-    VkDeviceQueueCreateInfo queue_create_info {};
-    queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queue_create_info.queueFamilyIndex = g_vk_graphics_queue_index;
-    queue_create_info.queueCount = 1;
-    float queue_priority = 1;
-    queue_create_info.pQueuePriorities = &queue_priority;
+    VkDeviceQueueCreateInfo queues_create_info[2] = {};
+    // Graphics queue
+    {
+        VkDeviceQueueCreateInfo *info = &queues_create_info[0];
+        info->sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        info->queueFamilyIndex = g_vk_graphics_queue_index;
+        info->queueCount = 1;
+        float queue_priority = 1;
+        info->pQueuePriorities = &queue_priority;
+    }
+    // Present queue
+    {
+        VkDeviceQueueCreateInfo *info = &queues_create_info[1];
+        info->sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        info->queueFamilyIndex = g_vk_present_queue_index;
+        info->queueCount = 1;
+        float queue_priority = 1;
+        info->pQueuePriorities = &queue_priority;
+    }
 
     VkPhysicalDeviceFeatures required_features {};
 
     VkDeviceCreateInfo create_info {};
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    create_info.pQueueCreateInfos = &queue_create_info;
-    create_info.queueCreateInfoCount = 1;
+    create_info.pQueueCreateInfos = queues_create_info;
+    create_info.queueCreateInfoCount = StaticArraySize (queues_create_info);
 
     create_info.pEnabledFeatures = &required_features;
 
@@ -303,8 +327,20 @@ static bool InitVulkanDeviceAndQueues ()
     }
 
     vkGetDeviceQueue (g_vk_device, g_vk_graphics_queue_index, 0, &g_vk_graphics_queue);
+    if (g_vk_graphics_queue == VK_NULL_HANDLE)
+    {
+        printf ("Could not get graphics queue from logical device\n");
+        return false;
+    }
 
-    printf ("Created Vulkan logicial device and retrieved graphics queue handle\n");
+    vkGetDeviceQueue (g_vk_device, g_vk_present_queue_index, 0, &g_vk_present_queue);
+    if (g_vk_present_queue == VK_NULL_HANDLE)
+    {
+        printf ("Could not get present queue from logical device\n");
+        return false;
+    }
+
+    printf ("Created Vulkan logicial device and retrieved queue handles\n");
 
     return true;
 }
@@ -314,11 +350,21 @@ bool GfxInitVulkan (GLFWwindow *window)
     if (!InitVulkanInstance (window))
         return false;
 
+    if (glfwCreateWindowSurface (g_vk_instance, window, null, &g_vk_surface) != VK_SUCCESS)
+    {
+        printf ("Could not create Vulkan window surface\n");
+        return false;
+    }
+
+    printf ("Created Vulkan window surface\n");
+
     if (!ChooseVulkanPhysicalDevice ())
         return false;
 
     if (!InitVulkanDeviceAndQueues ())
         return false;
+
+    printf ("\n=== Fully initialized Vulkan backend. Yipee! ===\n");
 
     return true;
 }
