@@ -1,14 +1,6 @@
 #include "Scop_Core.h"
 #include "Scop_Math.h"
 
-float Abs (float x)
-{
-    if (x < 0)
-        return -x;
-
-    return x;
-}
-
 Vec2f Add (const Vec2f &a, const Vec2f &b)
 {
     return Vec2f{

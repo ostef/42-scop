@@ -1,7 +1,10 @@
 #ifndef SCOP_MATH_H
 #define SCOP_MATH_H
 
-float Abs (float x);
+#define Min(a, b) ((a < b) ? a : b)
+#define Max(a, b) ((a > b) ? a : b)
+#define Clamp(x, a, b) ((x < a) ? a : (x > b) ? b : x)
+#define Abs(x) ((x < 0) ? -x : x)
 
 struct Vec2f
 {
