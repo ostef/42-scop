@@ -1,3 +1,6 @@
 *.exe
 *.pdb
 *.obj
+*.o
+.DS_Store
+**/**/.DS_Store

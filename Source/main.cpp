@@ -22,7 +22,7 @@ Result<String> ReadEntireFile (const char *filename)
 
     s64 number_of_bytes_read = fread (data, 1, size, file);
 
-    String str = {number_of_bytes_read, data};
+    String str = (String){number_of_bytes_read, data};
 
     return Result<String>::Good (str, true);
 }
@@ -37,10 +37,10 @@ int main (int argc, char **args)
     GLFWwindow *window = glfwCreateWindow (1280, 720, "Scop Vk", null, null);
     defer (glfwDestroyWindow (window));
 
-    bool vulkan_ok = GfxInitVulkan (window);
-    if (!vulkan_ok)
+    bool graphics_init_ok = GfxInitBackend (window);
+    if (!graphics_init_ok)
     {
-        printf ("Could not initialize Vulkan backend\n");
+        printf ("Could not initialize %s graphics backend\n", SCOP_BACKEND_NAME);
         return 1;
     }
 

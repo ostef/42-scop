@@ -3,7 +3,18 @@
 
 #include "Scop_Math.h"
 
-#define GLFW_INCLUDE_VULKAN
+#ifdef SCOP_BACKEND_OPENGL
+    #include "Scop_OpenGL.h"
+#elif defined (SCOP_BACKEND_VULKAN)
+    #include "Scop_Vulkan.h"
+
+    #define GLFW_INCLUDE_VULKAN
+#else
+    #error No graphics backend is defined. #define either SCOP_BACKEND_OPENGL or SCOP_BACKEND_VULKAN
+
+    #define SCOP_BACKEND_NAME "None"
+#endif
+
 #include <GLFW/glfw3.h>
 
 struct Vertex
@@ -23,19 +34,6 @@ struct Mesh
 
 bool LoadMeshFromObjFile (const char *filename, Mesh *mesh);
 
-extern VkInstance g_vk_instance;
-extern VkPhysicalDevice g_vk_physical_device;
-extern int g_vk_graphics_queue_index;
-extern int g_vk_present_queue_index;
-extern VkDevice g_vk_device;
-extern VkQueue g_vk_graphics_queue;
-extern VkQueue g_vk_present_queue;
-extern VkSurfaceKHR g_vk_surface;
-extern VkSwapchainKHR g_vk_swapchain;
-extern VkFormat g_vk_swapchain_image_format;
-extern Array<VkImage> g_vk_swapchain_images;
-extern Array<VkImageView> g_vk_swapchain_image_views;
-
-bool GfxInitVulkan (GLFWwindow *window);
+bool GfxInitBackend (GLFWwindow *window);
 
 #endif

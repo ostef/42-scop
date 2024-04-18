@@ -10,6 +10,12 @@ struct Vec2f
 {
     float x = 0;
     float y = 0;
+
+    Vec2f (float x = 0, float y = 0)
+    {
+        this->x = x;
+        this->y = y;
+    }
 };
 
 struct Vec3f
@@ -17,6 +23,13 @@ struct Vec3f
     float x = 0;
     float y = 0;
     float z = 0;
+
+    Vec3f (float x = 0, float y = 0, float z = 0)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+    }
 };
 
 struct Vec4f
@@ -25,6 +38,14 @@ struct Vec4f
     float y = 0;
     float z = 0;
     float w = 0;
+
+    Vec4f (float x = 0, float y = 0, float z = 0, float w = 0)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+        this->w = w;
+    }
 };
 
 struct Quatf
@@ -33,6 +54,14 @@ struct Quatf
     float y = 0;
     float z = 0;
     float w = 1;
+
+    Quatf (float x = 0, float y = 0, float z = 0, float w = 1)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+        this->w = w;
+    }
 };
 
 struct Mat3f

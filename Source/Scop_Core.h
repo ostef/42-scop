@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 
 typedef uint8_t  u8;
 typedef  int8_t  s8;
@@ -18,7 +19,7 @@ typedef double f64;
 
 #define null nullptr
 
-#define DebugBreak() __debugbreak ()
+#define DebugBreak() //__debugbreak ()
 #define Panic(...) { printf ("Panic! " __VA_ARGS__); DebugBreak (); }
 #define Assert(x, ...) { if (!(x)) { printf ("Assertion failed! " __VA_ARGS__); DebugBreak (); } }
 
@@ -26,6 +27,12 @@ struct String
 {
     s64 length = 0;
     char *data = null;
+
+    String (s64 length = 0, char *data = null)
+    {
+        this->length = length;
+        this->data = data;
+    }
 };
 
 template<typename T, typename Status = bool>
