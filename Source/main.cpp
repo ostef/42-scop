@@ -22,7 +22,7 @@ Result<String> ReadEntireFile (const char *filename)
 
     s64 number_of_bytes_read = fread (data, 1, size, file);
 
-    String str = (String){number_of_bytes_read, data};
+    String str = String{number_of_bytes_read, data};
 
     return Result<String>::Good (str, true);
 }
