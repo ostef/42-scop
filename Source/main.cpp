@@ -34,7 +34,9 @@ int main (int argc, char **args)
 
     glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
 
-    GLFWwindow *window = glfwCreateWindow (1280, 720, "Scop Vk", null, null);
+    char window_title[100];
+    snprintf (window_title, sizeof (window_title), "Scop (%s backend)", SCOP_BACKEND_NAME);
+    GLFWwindow *window = glfwCreateWindow (1280, 720, window_title, null, null);
     defer (glfwDestroyWindow (window));
 
     bool graphics_init_ok = GfxInitBackend (window);
