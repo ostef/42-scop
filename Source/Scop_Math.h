@@ -1,10 +1,16 @@
 #ifndef SCOP_MATH_H
 #define SCOP_MATH_H
 
-#define Min(a, b) ((a < b) ? a : b)
-#define Max(a, b) ((a > b) ? a : b)
-#define Clamp(x, a, b) ((x < a) ? a : (x > b) ? b : x)
-#define Abs(x) ((x < 0) ? -x : x)
+#include <math.h>
+
+#define Pi 3.14159265358979323846
+
+#define Min(a, b) (((a) < (b)) ? (a) : (b))
+#define Max(a, b) (((a) > (b)) ? (a) : (b))
+#define Clamp(x, a, b) (((x) < (a)) ? (a) : ((x) > (b)) ? (b) : (x))
+#define Abs(x) (((x) < 0) ? -(x) : (x))
+#define ToRads(x) ((x) * Pi / 180)
+#define ToDegs(x) ((x) * 180 / Pi)
 
 struct Vec2f
 {
@@ -16,6 +22,11 @@ struct Vec2f
         this->x = x;
         this->y = y;
     }
+
+    Vec2f &operator += (const Vec2f &b);
+    Vec2f &operator -= (const Vec2f &b);
+    Vec2f &operator *= (float b);
+    Vec2f &operator /= (float b);
 };
 
 struct Vec3f
@@ -30,6 +41,11 @@ struct Vec3f
         this->y = y;
         this->z = z;
     }
+
+    Vec3f &operator += (const Vec3f &b);
+    Vec3f &operator -= (const Vec3f &b);
+    Vec3f &operator *= (float b);
+    Vec3f &operator /= (float b);
 };
 
 struct Vec4f
@@ -46,6 +62,11 @@ struct Vec4f
         this->z = z;
         this->w = w;
     }
+
+    Vec4f &operator += (const Vec4f &b);
+    Vec4f &operator -= (const Vec4f &b);
+    Vec4f &operator *= (float b);
+    Vec4f &operator /= (float b);
 };
 
 struct Quatf
@@ -62,6 +83,11 @@ struct Quatf
         this->z = z;
         this->w = w;
     }
+
+    Quatf &operator += (const Quatf &b);
+    Quatf &operator -= (const Quatf &b);
+    Quatf &operator *= (float b);
+    Quatf &operator /= (float b);
 };
 
 struct Mat3f
@@ -173,6 +199,31 @@ float Dot (const Vec2f &a, const Vec2f &b);
 float Dot (const Vec3f &a, const Vec3f &b);
 float Dot (const Vec4f &a, const Vec4f &b);
 float Dot (const Quatf &a, const Quatf &b);
+
+float Length (const Vec2f &v);
+float Length (const Vec3f &v);
+float Length (const Vec4f &v);
+float Length (const Quatf &q);
+
+Vec2f Normalized (const Vec2f &v, const Vec2f &fallback = {});
+Vec3f Normalized (const Vec3f &v, const Vec3f &fallback = {});
+Vec4f Normalized (const Vec4f &v, const Vec4f &fallback = {});
+
 Vec3f Cross (const Vec3f &a, const Vec3f &b);
+
+Mat4f Inverted (const Mat4f &m);
+
+Vec3f RightVector (const Mat4f &m);
+Vec3f UpVector (const Mat4f &m);
+Vec3f ForwardVector (const Mat4f &m);
+
+Mat4f Mat4fTranslate (const Vec3f &translation);
+Mat4f Mat4fRotate (const Vec3f &axis, float angle);
+Mat4f Mat4fLookAt (const Vec3f &position, const Vec3f &target, const Vec3f &up);
+Mat4f Mat4fPerspectiveProjection (float fovy, float aspect, float znear, float zfar);
+
+Mat4f Mul (const Mat4f &a, const Mat4f &b);
+
+inline Mat4f operator * (const Mat4f &a, const Mat4f &b) { return Mul (a, b); }
 
 #endif

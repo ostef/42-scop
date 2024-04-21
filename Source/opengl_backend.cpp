@@ -120,6 +120,7 @@ bool GfxInitBackend ()
     glfwSetErrorCallback (GLFWErrorCallback);
 
     glfwWindowHint (GLFW_CLIENT_API, GLFW_OPENGL_API);
+    glfwWindowHint (GLFW_SAMPLES, 4);
     glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint (GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
@@ -190,7 +191,7 @@ void GfxCreateMeshObjects (Mesh *mesh)
     glBindVertexArray (0);
 }
 
-void GfxRenderFrame ()
+void GfxRenderFrame (Mesh *mesh)
 {
     int viewport_width, viewport_height;
     glfwGetFramebufferSize (g_main_window, &viewport_width, &viewport_height);
@@ -198,6 +199,32 @@ void GfxRenderFrame ()
     glViewport (0, 0, viewport_width, viewport_height);
     glClearColor (0.1, 0.1, 0.1, 1);
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glEnable (GL_DEPTH_TEST);
+    glDepthFunc (GL_LESS);
+
+    glUseProgram (g_shader);
+    glUniformMatrix4fv (
+        glGetUniformLocation (g_shader, "u_View_Projection_Matrix"),
+        1, GL_TRUE, &g_camera.view_projection_matrix.r0c0
+    );
+
+    Mat4f model_matrix = {};
+    glUniformMatrix4fv (
+        glGetUniformLocation (g_shader, "u_Model_Matrix"),
+        1, GL_TRUE, &model_matrix.r0c0
+    );
+
+    glBindVertexArray (mesh->gfx_objects.vao);
+    glBindBuffer (GL_ARRAY_BUFFER, mesh->gfx_objects.vbo);
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, mesh->gfx_objects.ibo);
+
+    // glDrawArrays (GL_TRIANGLES, 0, mesh->vertex_count);
+    glDrawElements (GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, null);
+
+    glBindBuffer (GL_ARRAY_BUFFER, 0);
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray (0);
 
     glfwSwapBuffers (g_main_window);
 }

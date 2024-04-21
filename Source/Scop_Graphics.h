@@ -23,6 +23,9 @@ struct Camera
     Vec3f target;
     Vec2f yaw_pitch;
 
+    Vec2f offset;
+    float distance_from_target;
+
     Mat4f view_matrix;
     Mat4f projection_matrix;
     Mat4f view_projection_matrix;
@@ -54,6 +57,6 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh);
 bool GfxInitBackend ();
 void GfxTerminateBackend ();
 void GfxCreateMeshObjects (Mesh *mesh);
-void GfxRenderFrame ();
+void GfxRenderFrame (Mesh *mesh);
 
 #endif
