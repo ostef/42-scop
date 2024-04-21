@@ -152,8 +152,7 @@ struct WeldMeshResult
 
 static WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
 {
-    u64 *remap_table = (u64 *)malloc (sizeof (u64) * vertex_count);
-    defer (free (remap_table));
+    u32 *remap_table = (u32 *)malloc (sizeof (u32) * vertex_count);
 
     for (u32 i = 0; i < vertex_count; i += 1)
         remap_table[i] = i;
@@ -181,25 +180,22 @@ static WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
     result.unique_vertices = (Vertex *)malloc (sizeof (Vertex) * unique_vertex_count);
     result.unique_vertex_count = unique_vertex_count;
 
-    result.indices = (u32 *)malloc (sizeof (u32) * vertex_count);
+    result.indices = remap_table;
     result.index_count = vertex_count;
 
     s64 vertex_index = 0;
     for (int i = 0; i < vertex_count; i += 1)
     {
-        if (remap_table[i] == i)
+        if (result.indices[i] == i)
         {
             result.unique_vertices[vertex_index] = vertices[i];
-            remap_table[i] = 0xffffffff + (u64)vertex_index;
             result.indices[i] = vertex_index;
 
             vertex_index += 1;
         }
         else
         {
-            u64 remap_indirection = remap_table[remap_table[i]] - 0xffffffff;
-
-            result.indices[i] = remap_indirection;
+            result.indices[i] = result.indices[result.indices[i]];
         }
     }
 
