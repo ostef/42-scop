@@ -150,12 +150,20 @@ struct WeldMeshResult
     s64 index_count;
 };
 
-static WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
+static WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count, u32 *indices)
 {
-    u32 *remap_table = (u32 *)malloc (sizeof (u32) * vertex_count);
+    u32 *remap_table;
+    if (indices)
+    {
+        remap_table = indices;
+    }
+    else
+    {
+        remap_table = (u32 *)malloc (sizeof (u32) * vertex_count);
 
-    for (u32 i = 0; i < vertex_count; i += 1)
-        remap_table[i] = i;
+        for (u32 i = 0; i < vertex_count; i += 1)
+            remap_table[i] = i;
+    }
 
     s64 unique_vertex_count = vertex_count;
     for (int i = 0; i < vertex_count; i += 1)
@@ -381,7 +389,7 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
         }
     }
 
-    auto welded_mesh = WeldMesh (vertices, vertex_count);
+    auto welded_mesh = WeldMesh (vertices, vertex_count, null);
 
     free (vertices);
     vertices = null;
