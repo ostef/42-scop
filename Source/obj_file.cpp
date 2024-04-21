@@ -142,6 +142,11 @@ struct OBJTriangleFace
     OBJIndex indices[3];
 };
 
+struct OBJQuadFace
+{
+    OBJIndex indices[4];
+};
+
 struct WeldMeshResult
 {
     Vertex *unique_vertices;
@@ -153,6 +158,8 @@ struct WeldMeshResult
 static WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
 {
     u32 *remap_table = (u32 *)malloc (sizeof (u32) * vertex_count);
+    if (!remap_table)
+        return {};
 
     for (u32 i = 0; i < vertex_count; i += 1)
         remap_table[i] = i;
@@ -178,6 +185,12 @@ static WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
 
     WeldMeshResult result = {};
     result.unique_vertices = (Vertex *)malloc (sizeof (Vertex) * unique_vertex_count);
+    if (!result.unique_vertices)
+    {
+        free (remap_table);
+        return {};
+    }
+
     result.unique_vertex_count = unique_vertex_count;
 
     result.indices = remap_table;
@@ -311,17 +324,43 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
         {
             SkipWhitespaceAndComments (&parser);
 
-            OBJTriangleFace *face = ArrayPush (&faces);
+            OBJQuadFace quad = {};
+            int i = 0;
 
-            for (int i = 0; i < 3; i += 1)
+            // Parse as potential quads, triangulate afterwards
+            for (i = 0; i < 4; i += 1)
             {
+                if (i == 3)
+                {
+                    bool found_newline = false;
+                    while (!IsAtEnd (parser))
+                    {
+                        if (parser.text[parser.offset] == '\n')
+                        {
+                            found_newline = true;
+                            break;
+                        }
+                        else if (isspace (parser.text[parser.offset]))
+                        {
+                            Advance (&parser);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    if (found_newline)
+                        break;
+                }
+
                 auto p = ParseInt (&parser);
                 if (!p.ok)
                 {
                     return false;
                 }
 
-                face->indices[i].position = p.value - 1;
+                quad.indices[i].position = p.value;
 
                 Result<int> t = {};
                 Result<int> n = {};
@@ -334,7 +373,7 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
                         return false;
                     }
 
-                    face->indices[i].tex_coords = t.value - 1;
+                    quad.indices[i].tex_coords = t.value;
 
                     if (MatchString (&parser, "/"))
                     {
@@ -344,9 +383,30 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
                             return false;
                         }
 
-                        face->indices[i].normal = n.value - 1;
+                        quad.indices[i].normal = n.value;
                     }
                 }
+            }
+
+            Assert (i == 3 || i == 4, "Face is not a triangle or quad");
+            if (i == 3)
+            {
+                OBJTriangleFace *face = ArrayPush (&faces);
+                face->indices[0] = quad.indices[0];
+                face->indices[1] = quad.indices[1];
+                face->indices[2] = quad.indices[2];
+            }
+            else
+            {
+                OBJTriangleFace *face = ArrayPush (&faces);
+                face->indices[0] = quad.indices[0];
+                face->indices[1] = quad.indices[2];
+                face->indices[2] = quad.indices[1];
+
+                face = ArrayPush (&faces);
+                face->indices[0] = quad.indices[0];
+                face->indices[1] = quad.indices[3];
+                face->indices[2] = quad.indices[2];
             }
         }
         else
@@ -357,7 +417,13 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
 
     s64 vertex_count = faces.count * 3;
     Vertex *vertices = (Vertex *)malloc (sizeof (Vertex) * vertex_count);
+    if (!vertices)
+    {
+        LogError ("Could not allocate vertices");
+        return false;
+    }
 
+    // Populate array of vertices
     for (int f = 0; f < faces.count; f += 1)
     {
         for (int i = 0; i < 3; i += 1)
@@ -365,17 +431,17 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
             Vertex *v = &vertices[f * 3 + i];
 
             int index = faces[f].indices[i].position;
-            v->position = positions[index];
+            v->position = positions[index - 1];
 
             index = faces[f].indices[i].normal;
             if (index > 0)
-                v->normal = normals[index];
+                v->normal = normals[index - 1];
             else
                 v->normal = {};
 
             index = faces[f].indices[i].tex_coords;
             if (index > 0)
-                v->tex_coords = tex_coords[index];
+                v->tex_coords = tex_coords[index - 1];
             else
                 v->tex_coords = {};
         }
