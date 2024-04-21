@@ -102,6 +102,8 @@ static bool MatchString (Parser *parser, const char *str)
     if (EqualsString (parser, str))
     {
         Advance (parser, strlen (str));
+
+        return true;
     }
 
     return false;
@@ -169,11 +171,7 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
     {
         SkipWhitespaceAndComments (&parser);
 
-        if (MatchAlphaNumeric (&parser, "mtllib"))
-        {
-            AdvanceToNextLine (&parser);
-        }
-        else if (MatchAlphaNumeric (&parser, "v"))
+        if (MatchAlphaNumeric (&parser, "v"))
         {
             SkipWhitespaceAndComments (&parser);
 
@@ -291,7 +289,7 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
         }
         else
         {
-            Advance (&parser);
+            AdvanceToNextLine (&parser);
         }
     }
 
@@ -343,6 +341,8 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
     }
 
     GfxCreateMeshObjects (mesh);
+
+    LogMessage ("Loaded mesh '%s', %lld vertices, %lld indices", filename, mesh->vertex_count, mesh->index_count);
 
     return true;
 }
