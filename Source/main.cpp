@@ -95,7 +95,7 @@ int main (int argc, char **args)
     g_camera.distance_from_target = 3;
 
     Mesh mannequin_mesh = {};
-    const char *mesh_filename = "Data/42.obj";
+    const char *mesh_filename = "Data/Male_Prototype.obj";
     bool ok = LoadMeshFromObjFile (mesh_filename, &mannequin_mesh);
     if (!ok)
         LogError ("Could not load mesh '%s'", mesh_filename);

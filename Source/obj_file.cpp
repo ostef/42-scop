@@ -142,6 +142,72 @@ struct OBJTriangleFace
     OBJIndex indices[3];
 };
 
+struct WeldMeshResult
+{
+    Vertex *unique_vertices;
+    s64 unique_vertex_count;
+    u32 *indices;
+    s64 index_count;
+};
+
+static WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
+{
+    u64 *remap_table = (u64 *)malloc (sizeof (u64) * vertex_count);
+    defer (free (remap_table));
+
+    for (u32 i = 0; i < vertex_count; i += 1)
+        remap_table[i] = i;
+
+    s64 unique_vertex_count = vertex_count;
+    for (int i = 0; i < vertex_count; i += 1)
+    {
+        // If already remapped
+        if (remap_table[i] != i)
+            continue;
+
+        for (int j = i + 1; j < vertex_count; j += 1)
+        {
+            if (vertices[i].position == vertices[j].position
+            && vertices[i].normal == vertices[j].normal
+            && vertices[i].tex_coords == vertices[j].tex_coords)
+            {
+                remap_table[j] = i;
+                unique_vertex_count -= 1;
+            }
+        }
+    }
+
+    WeldMeshResult result = {};
+    result.unique_vertices = (Vertex *)malloc (sizeof (Vertex) * unique_vertex_count);
+    result.unique_vertex_count = unique_vertex_count;
+
+    result.indices = (u32 *)malloc (sizeof (u32) * vertex_count);
+    result.index_count = vertex_count;
+
+    s64 vertex_index = 0;
+    for (int i = 0; i < vertex_count; i += 1)
+    {
+        if (remap_table[i] == i)
+        {
+            result.unique_vertices[vertex_index] = vertices[i];
+            remap_table[i] = 0xffffffff + (u64)vertex_index;
+            result.indices[i] = vertex_index;
+
+            vertex_index += 1;
+        }
+        else
+        {
+            u64 remap_indirection = remap_table[remap_table[i]] - 0xffffffff;
+
+            result.indices[i] = remap_indirection;
+        }
+    }
+
+    Assert (vertex_index == result.unique_vertex_count);
+
+    return result;
+}
+
 bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
 {
     auto read_result = ReadEntireFile (filename);
@@ -293,51 +359,51 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
         }
     }
 
-    mesh->vertex_count = faces.count * 3;
-    mesh->vertices = (Vertex *)malloc (sizeof (Vertex) * mesh->vertex_count);
+    s64 vertex_count = faces.count * 3;
+    Vertex *vertices = (Vertex *)malloc (sizeof (Vertex) * vertex_count);
+
+    for (int f = 0; f < faces.count; f += 1)
+    {
+        for (int i = 0; i < 3; i += 1)
+        {
+            Vertex *v = &vertices[f * 3 + i];
+
+            int index = faces[f].indices[i].position;
+            v->position = positions[index];
+
+            index = faces[f].indices[i].normal;
+            if (index > 0)
+                v->normal = normals[index];
+            else
+                v->normal = {};
+
+            index = faces[f].indices[i].tex_coords;
+            if (index > 0)
+                v->tex_coords = tex_coords[index];
+            else
+                v->tex_coords = {};
+        }
+    }
+
+    auto welded_mesh = WeldMesh (vertices, vertex_count);
+
+    free (vertices);
+    vertices = null;
+
+    mesh->vertex_count = welded_mesh.unique_vertex_count;
+    mesh->vertices = welded_mesh.unique_vertices;
     if (!mesh->vertices)
     {
         LogError ("Could not allocate mesh vertices");
         return false;
     }
 
-    mesh->index_count = faces.count * 3;
-    mesh->indices = (u32 *)malloc (sizeof (u32) * mesh->index_count);
+    mesh->index_count = welded_mesh.index_count;
+    mesh->indices = welded_mesh.indices;
     if (!mesh->indices)
     {
         LogError ("Could not allocate mesh indices");
         return false;
-    }
-
-    s64 vi = 0;
-    s64 ii = 0;
-    for (s64 fi = 0; fi < faces.count; fi += 1)
-    {
-        auto face = faces[fi];
-
-        for (int i = 0; i < 3; i += 1)
-        {
-            mesh->indices[ii] = (u32)vi;
-            ii += 1;
-
-            Vertex *vertex = &mesh->vertices[vi];
-            vi += 1;
-
-            int position_index = face.indices[i].position;
-            vertex->position = positions[position_index];
-
-            if (face.indices[i].normal > 0)
-            {
-                int normal_index = face.indices[i].normal;
-                vertex->normal = normals[normal_index];
-            }
-
-            if (face.indices[i].tex_coords > 0)
-            {
-                int tex_coords_index = face.indices[i].tex_coords;
-                vertex->tex_coords = tex_coords[tex_coords_index];
-            }
-        }
     }
 
     GfxCreateMeshObjects (mesh);

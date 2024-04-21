@@ -121,7 +121,7 @@ struct Array
     T *data = null;
     s64 allocated = 0;
 
-    T &operator [] (s64 index)
+    inline T &operator [] (s64 index)
     {
         Assert (index >= 0 && index < count,
             "Array bounds check failed (attempted index is %lld, count is %lld)",
@@ -131,7 +131,7 @@ struct Array
         return data[index];
     }
 
-    const T &operator [] (s64 index) const
+    inline const T &operator [] (s64 index) const
     {
         Assert (index >= 0 && index < count,
             "Array bounds check failed (attempted index is %lld, count is %lld)",
