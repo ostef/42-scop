@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <ctype.h>
 
 typedef uint8_t  u8;
 typedef  int8_t  s8;
@@ -19,9 +22,31 @@ typedef double f64;
 
 #define null nullptr
 
-#define DebugBreak() //__debugbreak ()
-#define Panic(...) { printf ("Panic! " __VA_ARGS__); DebugBreak (); }
-#define Assert(x, ...) { if (!(x)) { printf ("Assertion failed! " __VA_ARGS__); DebugBreak (); } }
+static char g_assert_failure_message_buffer[10000];
+
+#define DebugBreak() __debugbreak ()
+
+#define Panic(...) do { \
+        snprintf (g_assert_failure_message_buffer, 10000, "" __VA_ARGS__); \
+        HandlePanic (__FILE__, __LINE__, g_assert_failure_message_buffer);\
+    } while (0)
+
+#define Assert(x, ...) do { if (!(x)) {\
+        snprintf (g_assert_failure_message_buffer, 10000, "" __VA_ARGS__); \
+        HandleAssertionFailure (__FILE__, __LINE__, #x, g_assert_failure_message_buffer); }\
+    } while (0)
+
+static inline void HandlePanic (const char *file, int line, const char *message)
+{
+    printf ("\x1b[1;35mPanic!\x1b[0m At file %s:%d\n%s\n", file, line, message);
+    DebugBreak ();
+}
+
+static inline void HandleAssertionFailure (const char *file, int line, const char *expr, const char *message)
+{
+    printf ("\x1b[1;35mAssertion failed!\x1b[0m At file %s:%d\n%s (%s)\n", file, line, message, expr);
+    DebugBreak ();
+}
 
 struct String
 {
@@ -98,14 +123,20 @@ struct Array
 
     T &operator [] (s64 index)
     {
-        Assert (index >= 0 && index < count, "Array bounds check failed");
+        Assert (index >= 0 && index < count,
+            "Array bounds check failed (attempted index is %lld, count is %lld)",
+            index, count
+        );
 
         return data[index];
     }
 
     const T &operator [] (s64 index) const
     {
-        Assert (index >= 0 && index < count, "Array bounds check failed");
+        Assert (index >= 0 && index < count,
+            "Array bounds check failed (attempted index is %lld, count is %lld)",
+            index, count
+        );
 
         return data[index];
     }
@@ -171,5 +202,9 @@ void ArrayClear (Array<T> *arr)
 }
 
 Result<String> ReadEntireFile (const char *filename);
+
+void LogMessage (const char *str, ...);
+void LogWarning (const char *str, ...);
+void LogError (const char *str, ...);
 
 #endif

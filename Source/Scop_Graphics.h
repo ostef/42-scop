@@ -17,6 +17,20 @@
 
 #include <GLFW/glfw3.h>
 
+struct Camera
+{
+    Vec3f position;
+    Vec3f target;
+    Vec2f yaw_pitch;
+
+    Mat4f view_matrix;
+    Mat4f projection_matrix;
+    Mat4f view_projection_matrix;
+};
+
+extern GLFWwindow *g_main_window;
+extern Camera g_camera;
+
 struct Vertex
 {
     Vec3f position;
@@ -30,10 +44,16 @@ struct Mesh
     s64 vertex_count;
     u32 *indices;
     s64 index_count;
+    GfxMeshObjects gfx_objects;
 };
+
+void GLFWErrorCallback (int code, const char *description);
 
 bool LoadMeshFromObjFile (const char *filename, Mesh *mesh);
 
-bool GfxInitBackend (GLFWwindow *window);
+bool GfxInitBackend ();
+void GfxTerminateBackend ();
+void GfxCreateMeshObjects (Mesh *mesh);
+void GfxRenderFrame ();
 
 #endif

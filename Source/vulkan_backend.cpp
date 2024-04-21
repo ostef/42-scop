@@ -1,10 +1,6 @@
 #include "Scop_Core.h"
 #include "Scop_Graphics.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 VkInstance g_vk_instance {};
 VkPhysicalDevice g_vk_physical_device = VK_NULL_HANDLE;
 int g_vk_graphics_queue_index = -1;

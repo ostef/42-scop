@@ -1,11 +1,6 @@
 #include "Scop_Core.h"
 #include "Scop_Graphics.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-
 struct Parser
 {
     char *text = null;
@@ -34,6 +29,16 @@ static void Advance (Parser *parser, int count = 1)
     }
 }
 
+static void AdvanceToNextLine (Parser *parser)
+{
+    while (!IsAtEnd (*parser) && parser->text[parser->offset] != '\n')
+    {
+        Advance (parser);
+    }
+
+    Advance (parser);
+}
+
 static void SkipWhitespaceAndComments (Parser *parser)
 {
     while (!IsAtEnd (*parser))
@@ -44,10 +49,7 @@ static void SkipWhitespaceAndComments (Parser *parser)
         }
         else if (parser->text[parser->offset] == '#')
         {
-            while (!IsAtEnd (*parser) && parser->text[parser->offset] != '\n')
-            {
-                Advance (parser);
-            }
+            AdvanceToNextLine (parser);
         }
         else
         {
@@ -87,12 +89,12 @@ static Result<int> ParseInt (Parser *parser)
 static bool EqualsString (Parser *parser, const char *str)
 {
     int len = strlen (str);
-    if (parser->size - parser->offset < len)
+    if (parser->offset + len > parser->size)
         return false;
 
-    int res = strncmp (parser->text + parser->offset, str, parser->size - parser->offset);
+    int res = strncmp (parser->text + parser->offset, str, len);
 
-    return res != 0;
+    return res == 0;
 }
 
 static bool MatchString (Parser *parser, const char *str)
@@ -142,7 +144,10 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
 {
     auto read_result = ReadEntireFile (filename);
     if (!read_result.ok)
+    {
+        LogError ("Could not read file '%s'", filename);
         return false;
+    }
 
     String file_contents = read_result.value;
     defer (free (file_contents.data));
@@ -164,21 +169,31 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
     {
         SkipWhitespaceAndComments (&parser);
 
-        if (MatchAlphaNumeric (&parser, "v"))
+        if (MatchAlphaNumeric (&parser, "mtllib"))
+        {
+            AdvanceToNextLine (&parser);
+        }
+        else if (MatchAlphaNumeric (&parser, "v"))
         {
             SkipWhitespaceAndComments (&parser);
 
             auto p0 = ParseFloat (&parser);
             if (!p0.ok)
+            {
                 return false;
+            }
 
             auto p1 = ParseFloat (&parser);
             if (!p1.ok)
+            {
                 return false;
+            }
 
             auto p2 = ParseFloat (&parser);
             if (!p2.ok)
+            {
                 return false;
+            }
 
             Vec3f *vertex = ArrayPush (&positions);
             vertex->x = p0.value;
@@ -191,11 +206,15 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
 
             auto t0 = ParseFloat (&parser);
             if (!t0.ok)
+            {
                 return false;
+            }
 
             auto t1 = ParseFloat (&parser);
             if (!t1.ok)
+            {
                 return false;
+            }
 
             Vec2f *uv = ArrayPush (&tex_coords);
             uv->x = t0.value;
@@ -207,15 +226,21 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
 
             auto n0 = ParseFloat (&parser);
             if (!n0.ok)
+            {
                 return false;
+            }
 
             auto n1 = ParseFloat (&parser);
             if (!n1.ok)
+            {
                 return false;
+            }
 
             auto n2 = ParseFloat (&parser);
             if (!n2.ok)
+            {
                 return false;
+            }
 
             Vec3f *normal = ArrayPush (&normals);
             normal->x = n0.value;
@@ -232,9 +257,11 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
             {
                 auto p = ParseInt (&parser);
                 if (!p.ok)
+                {
                     return false;
+                }
 
-                face->indices[i].position = p.value;
+                face->indices[i].position = p.value - 1;
 
                 Result<int> t = {};
                 Result<int> n = {};
@@ -243,17 +270,21 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
                 {
                     t = ParseInt (&parser);
                     if (!t.ok)
+                    {
                         return false;
+                    }
 
-                    face->indices[i].tex_coords = t.value;
+                    face->indices[i].tex_coords = t.value - 1;
 
                     if (MatchString (&parser, "/"))
                     {
                         n = ParseInt (&parser);
                         if (!n.ok)
+                        {
                             return false;
+                        }
 
-                        face->indices[i].normal = n.value;
+                        face->indices[i].normal = n.value - 1;
                     }
                 }
             }
@@ -266,9 +297,19 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
 
     mesh->vertex_count = faces.count * 3;
     mesh->vertices = (Vertex *)malloc (sizeof (Vertex) * mesh->vertex_count);
+    if (!mesh->vertices)
+    {
+        LogError ("Could not allocate mesh vertices");
+        return false;
+    }
 
     mesh->index_count = faces.count * 3;
     mesh->indices = (u32 *)malloc (sizeof (u32) * mesh->index_count);
+    if (!mesh->indices)
+    {
+        LogError ("Could not allocate mesh indices");
+        return false;
+    }
 
     s64 vi = 0;
     s64 ii = 0;
@@ -284,15 +325,24 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
             Vertex *vertex = &mesh->vertices[vi];
             vi += 1;
 
-            vertex->position = positions[face.indices[i].position];
+            int position_index = face.indices[i].position;
+            vertex->position = positions[position_index];
 
-            if (face.indices[i].normal >= 0)
-                vertex->normal = normals[face.indices[i].normal];
+            if (face.indices[i].normal > 0)
+            {
+                int normal_index = face.indices[i].normal;
+                vertex->normal = normals[normal_index];
+            }
 
-            if (face.indices[i].tex_coords >= 0)
-                vertex->tex_coords = tex_coords[face.indices[i].tex_coords];
+            if (face.indices[i].tex_coords > 0)
+            {
+                int tex_coords_index = face.indices[i].tex_coords;
+                vertex->tex_coords = tex_coords[tex_coords_index];
+            }
         }
     }
+
+    GfxCreateMeshObjects (mesh);
 
     return true;
 }
