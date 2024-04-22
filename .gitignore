@@ -3,7 +3,6 @@ ScopGL
 ScopVk
 *.exe
 *.pdb
-*.obj
-*.o
+Obj/
 .DS_Store
 **/**/.DS_Store
