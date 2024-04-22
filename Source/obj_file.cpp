@@ -217,6 +217,51 @@ static WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
     return result;
 }
 
+static void CalculateFlatNormalsUnindexed (Vertex *vertices, s64 vertex_count)
+{
+    Assert (vertex_count % 3 == 0, "Vertices must form triangles");
+
+    s64 tri_count = vertex_count / 3;
+    for (int i = 0; i < tri_count; i += 1)
+    {
+        Vertex *v = vertices + i * 3;
+
+        Vec3f delta12 = v[2].position - v[1].position;
+        Vec3f delta10 = v[0].position - v[1].position;
+        Vec3f normal = Cross (delta12, delta10);
+        normal = Normalized (normal);
+
+        v[0].normal = normal;
+        v[1].normal = normal;
+        v[2].normal = normal;
+    }
+}
+
+static void CalculateSmoothNormalsIndexed (Vertex *vertices, s64 vertex_count, u32 *indices, s64 index_count)
+{
+    for (int i = 0; i < index_count; i += 3)
+    {
+        Vertex &v0 = vertices[indices[i + 0]];
+        Vertex &v1 = vertices[indices[i + 1]];
+        Vertex &v2 = vertices[indices[i + 2]];
+
+        Vec3f a = v0.position;
+        Vec3f b = v1.position;
+        Vec3f c = v2.position;
+
+        Vec3f bc = c - b;
+        Vec3f ba = a - b;
+        Vec3f normal = Normalized (Cross (bc, ba));
+
+        v0.normal += normal;
+        v1.normal += normal;
+        v2.normal += normal;
+    }
+
+    for (int i = 0; i < vertex_count; i += 1)
+        vertices[i].normal = Normalized (vertices[i].normal);
+}
+
 bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
 {
     auto read_result = ReadEntireFile (filename);
@@ -400,13 +445,13 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
             {
                 OBJTriangleFace *face = ArrayPush (&faces);
                 face->indices[0] = quad.indices[0];
-                face->indices[1] = quad.indices[2];
-                face->indices[2] = quad.indices[1];
+                face->indices[1] = quad.indices[1];
+                face->indices[2] = quad.indices[2];
 
                 face = ArrayPush (&faces);
                 face->indices[0] = quad.indices[0];
-                face->indices[1] = quad.indices[3];
-                face->indices[2] = quad.indices[2];
+                face->indices[1] = quad.indices[2];
+                face->indices[2] = quad.indices[3];
             }
         }
         else
@@ -447,6 +492,11 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
         }
     }
 
+    // if (normals.count == 0)
+    // {
+    //     CalculateFlatNormalsUnindexed (vertices, vertex_count);
+    // }
+
     auto welded_mesh = WeldMesh (vertices, vertex_count);
 
     free (vertices);
@@ -466,6 +516,11 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
     {
         LogError ("Could not allocate mesh indices");
         return false;
+    }
+
+    if (normals.count == 0)
+    {
+        CalculateSmoothNormalsIndexed (mesh->vertices, mesh->vertex_count, mesh->indices, mesh->index_count);
     }
 
     GfxCreateMeshObjects (mesh);
