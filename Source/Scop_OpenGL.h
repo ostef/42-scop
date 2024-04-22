@@ -25,4 +25,6 @@ enum GLVertexAttribIndex
     GL_Attrib_Tex_Coords,
 };
 
+typedef GLuint GfxTexture;
+
 #endif

@@ -1,5 +1,6 @@
 #include "Scop_Core.h"
 #include "Scop_Graphics.h"
+#include "Scop_Math.h"
 
 WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
 {
@@ -165,5 +166,30 @@ void CalculateTangents (Vertex *vertices, s64 vertex_count, u32 *indices, s64 in
         float tangent_sign = (Dot (Cross (t, b), n) > 0) ? 1.0f : -1.0;
 
         vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangent_sign};
+    }
+}
+
+void CalculateBoundingBox (Mesh *mesh)
+{
+    mesh->aabb_min = {FLT_MAX, FLT_MAX, FLT_MAX};
+    mesh->aabb_max = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
+    for (int i = 0; i < mesh->vertex_count; i += 1)
+    {
+        mesh->aabb_min.x = Min (mesh->aabb_min.x, mesh->vertices[i].position.x);
+        mesh->aabb_min.y = Min (mesh->aabb_min.y, mesh->vertices[i].position.y);
+        mesh->aabb_min.z = Min (mesh->aabb_min.z, mesh->vertices[i].position.z);
+
+        mesh->aabb_max.x = Max (mesh->aabb_max.x, mesh->vertices[i].position.x);
+        mesh->aabb_max.y = Max (mesh->aabb_max.y, mesh->vertices[i].position.y);
+        mesh->aabb_max.z = Max (mesh->aabb_max.z, mesh->vertices[i].position.z);
+    }
+}
+
+void CalculateBasicTexCoords (Mesh *mesh)
+{
+    for (int i = 0; i < mesh->vertex_count; i += 1)
+    {
+        mesh->vertices[i].tex_coords.x = InverseLerp (mesh->aabb_min.z, mesh->aabb_max.z, mesh->vertices[i].position.z);
+        mesh->vertices[i].tex_coords.y = InverseLerp (mesh->aabb_min.y, mesh->aabb_max.y, mesh->vertices[i].position.y);
     }
 }

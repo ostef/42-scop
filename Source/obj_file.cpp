@@ -441,6 +441,11 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
         CalculateTangents (mesh->vertices, mesh->vertex_count, mesh->indices, mesh->index_count);
     }
 
+    CalculateBoundingBox (mesh);
+
+    if (tex_coords.count == 0 && flags & LoadMesh_CalculateTexCoords)
+        CalculateBasicTexCoords (mesh);
+
     GfxCreateMeshObjects (mesh);
 
     LogMessage ("Loaded mesh '%s', %lld vertices, %lld indices", filename, mesh->vertex_count, mesh->index_count);

@@ -91,14 +91,21 @@ int main (int argc, char **args)
 
     glfwSetScrollCallback (g_main_window, GLFWScrollCallback);
 
-    g_camera.offset.y = 1;
-    g_camera.distance_from_target = 3;
+    const char *texture_filename = "Data/uv.png";
+    GfxTexture texture;
+    if (!LoadTextureFromFile (texture_filename, &texture, null, null))
+        LogError ("Could not load texture '%s'", texture_filename);
 
     Mesh mannequin_mesh = {};
-    const char *mesh_filename = "Data/Male_Prototype.obj";
+    const char *mesh_filename = "Data/teapot.obj";
     bool ok = LoadMeshFromObjFile (mesh_filename, &mannequin_mesh);
     if (!ok)
         LogError ("Could not load mesh '%s'", mesh_filename);
+
+    Vec3f light_position = {-10,10,-10};
+
+    g_camera.target = (mannequin_mesh.aabb_min + mannequin_mesh.aabb_max) * 0.5;
+    g_camera.distance_from_target = 3;
 
     while (!glfwWindowShouldClose (g_main_window))
     {
@@ -106,7 +113,7 @@ int main (int argc, char **args)
 
         UpdateCamera ();
 
-        GfxRenderFrame (&mannequin_mesh);
+        GfxRenderFrame (&mannequin_mesh, texture, light_position);
     }
 
     return 0;
@@ -181,3 +188,36 @@ Result<String> ReadEntireFile (const char *filename)
 
     return Result<String>::Good (str, true);
 }
+
+bool LoadTextureFromFile (const char *filename, GfxTexture *texture, u32 *width, u32 *height)
+{
+    *texture = 0;
+    if (width)
+        *width = 0;
+    if (height)
+        *height = 0;
+
+    int x, y;
+    u8 *pixels = stbi_load (filename, &x, &y, null, 4);
+    if (!pixels)
+    {
+        return false;
+    }
+
+    defer (stbi_image_free (pixels));
+
+    GfxTexture result = GfxCreateTexture (pixels, x, y);
+    if (!result)
+        return false;
+
+    *texture = result;
+    if (width)
+        *width = x;
+    if (height)
+        *height = y;
+
+    return true;
+}
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"

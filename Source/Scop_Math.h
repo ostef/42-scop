@@ -2,6 +2,8 @@
 #define SCOP_MATH_H
 
 #include <math.h>
+#include <float.h>
+#include <limits.h>
 
 #define Pi 3.14159265358979323846
 
@@ -11,6 +13,8 @@
 #define Abs(x) (((x) < 0) ? -(x) : (x))
 #define ToRads(x) ((x) * Pi / 180)
 #define ToDegs(x) ((x) * 180 / Pi)
+#define Lerp(a, b, t) ((a) * (1 - (t)) + (b) * (t))
+#define InverseLerp(a, b, v) (((v) - (a)) / ((b) - (a)))
 
 struct Vec2f
 {

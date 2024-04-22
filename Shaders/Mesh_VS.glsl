@@ -9,6 +9,7 @@ uniform mat4 u_Model_Matrix;
 
 out vec3 Vertex_Position;
 out vec3 Normal;
+out vec2 Tex_Coords;
 
 void main ()
 {
@@ -16,4 +17,5 @@ void main ()
 
     Vertex_Position = v_Position;
     Normal = v_Normal;
+    Tex_Coords = v_Tex_Coords;
 }

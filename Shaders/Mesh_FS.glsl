@@ -2,18 +2,22 @@
 
 in vec3 Vertex_Position;
 in vec3 Normal;
+in vec2 Tex_Coords;
 
 out vec4 Frag_Color;
+
+uniform vec3 u_Light_Position;
+uniform sampler2D u_Texture;
 
 void main ()
 {
     vec3 normal = Normal * float (gl_FrontFacing) * 2 - 1;
+    normal = normalize (normal);
 
-    vec3 light_position = vec3(-100, 100, -100);
-    vec3 vertex_to_light = normalize (light_position - Vertex_Position);
+    vec3 vertex_to_light = normalize (u_Light_Position - Vertex_Position);
     float diffuse_factor = max (dot (vertex_to_light, normal), 0.1);
 
-    vec3 diffuse_color = vec3(1,1,1) * diffuse_factor;
+    vec3 diffuse = texture (u_Texture, Tex_Coords).rgb;
 
-    Frag_Color = vec4 (diffuse_color,1);
+    Frag_Color = vec4 (diffuse * diffuse_factor,1);
 }

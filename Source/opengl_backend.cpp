@@ -191,7 +191,7 @@ void GfxCreateMeshObjects (Mesh *mesh)
     glBindVertexArray (0);
 }
 
-void GfxRenderFrame (Mesh *mesh)
+void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position)
 {
     int viewport_width, viewport_height;
     glfwGetFramebufferSize (g_main_window, &viewport_width, &viewport_height);
@@ -215,16 +215,39 @@ void GfxRenderFrame (Mesh *mesh)
         1, GL_TRUE, &model_matrix.r0c0
     );
 
+    glUniform3f (
+        glGetUniformLocation (g_shader, "u_Light_Position"),
+        light_position.x, light_position.y, light_position.z
+    );
+
+    glBindTexture (GL_TEXTURE_2D, texture);
+
     glBindVertexArray (mesh->gfx_objects.vao);
     glBindBuffer (GL_ARRAY_BUFFER, mesh->gfx_objects.vbo);
     glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, mesh->gfx_objects.ibo);
 
-    // glDrawArrays (GL_TRIANGLES, 0, mesh->vertex_count);
     glDrawElements (GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, null);
+
+    glBindTexture (GL_TEXTURE_2D, 0);
 
     glBindBuffer (GL_ARRAY_BUFFER, 0);
     glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray (0);
 
     glfwSwapBuffers (g_main_window);
+}
+
+GfxTexture GfxCreateTexture (void *data, u32 width, u32 height)
+{
+    GLuint tex;
+    glGenTextures (1, &tex);
+    glBindTexture (GL_TEXTURE_2D, tex);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture (GL_TEXTURE_2D, 0);
+
+    return tex;
 }
