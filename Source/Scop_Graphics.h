@@ -38,6 +38,7 @@ struct Vertex
 {
     Vec3f position;
     Vec3f normal;
+    Vec4f tangent;
     Vec2f tex_coords;
 };
 
@@ -50,7 +51,19 @@ struct Mesh
     GfxMeshObjects gfx_objects;
 };
 
-void GLFWErrorCallback (int code, const char *description);
+struct WeldMeshResult
+{
+    Vertex *unique_vertices;
+    s64 unique_vertex_count;
+    u32 *indices;
+    s64 index_count;
+};
+
+WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count);
+
+void CalculateTangents (Vertex *vertices, s64 vertex_count, u32 *indices, s64 index_count);
+void CalculateNormalsFlat (Vertex *vertices, s64 vertex_count);
+void CalculateNormalsSmooth (Vertex *vertices, s64 vertex_count, u32 *indices, s64 index_count);
 
 enum LoadMeshFlags
 {
@@ -58,11 +71,16 @@ enum LoadMeshFlags
     LoadMesh_CalculateNormalsSmooth = 0x02,
     LoadMesh_CalculateNormalsFlat = 0x04,
     LoadMesh_IgnoreSuppliedNormals = 0x08,
+    LoadMesh_CalculateTangents = 0x10,
 
-    LoadMesh_DefaultFlags = LoadMesh_WeldMesh | LoadMesh_CalculateNormalsSmooth,
+    LoadMesh_DefaultFlags = LoadMesh_WeldMesh
+        | LoadMesh_CalculateNormalsSmooth
+        | LoadMesh_CalculateTangents,
 };
 
 bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags = LoadMesh_DefaultFlags);
+
+void GLFWErrorCallback (int code, const char *description);
 
 bool GfxInitBackend ();
 void GfxTerminateBackend ();

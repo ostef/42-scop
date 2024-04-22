@@ -210,6 +210,7 @@ Vec3f Normalized (const Vec3f &v, const Vec3f &fallback = {});
 Vec4f Normalized (const Vec4f &v, const Vec4f &fallback = {});
 
 Vec3f Cross (const Vec3f &a, const Vec3f &b);
+Vec3f Reject (const Vec3f &a, const Vec3f &b);
 
 Mat4f Inverted (const Mat4f &m);
 

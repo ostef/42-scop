@@ -351,6 +351,11 @@ Vec3f Cross (const Vec3f &a, const Vec3f &b)
     };
 }
 
+Vec3f Reject (const Vec3f &a, const Vec3f &b)
+{
+    return a - b * (Dot (a, b) / Dot (b, b));
+}
+
 Vec2f &Vec2f::operator += (const Vec2f &b) { *this = *this + b; return *this; }
 Vec2f &Vec2f::operator -= (const Vec2f &b) { *this = *this - b; return *this; }
 Vec2f &Vec2f::operator *= (float b) { *this = *this * b; return *this; }

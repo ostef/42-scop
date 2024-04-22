@@ -147,121 +147,6 @@ struct OBJQuadFace
     OBJIndex indices[4];
 };
 
-struct WeldMeshResult
-{
-    Vertex *unique_vertices;
-    s64 unique_vertex_count;
-    u32 *indices;
-    s64 index_count;
-};
-
-static WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
-{
-    u32 *remap_table = (u32 *)malloc (sizeof (u32) * vertex_count);
-    if (!remap_table)
-        return {};
-
-    for (u32 i = 0; i < vertex_count; i += 1)
-        remap_table[i] = i;
-
-    s64 unique_vertex_count = vertex_count;
-    for (int i = 0; i < vertex_count; i += 1)
-    {
-        // If already remapped
-        if (remap_table[i] != i)
-            continue;
-
-        for (int j = i + 1; j < vertex_count; j += 1)
-        {
-            if (vertices[i].position == vertices[j].position
-            && vertices[i].normal == vertices[j].normal
-            && vertices[i].tex_coords == vertices[j].tex_coords)
-            {
-                remap_table[j] = i;
-                unique_vertex_count -= 1;
-            }
-        }
-    }
-
-    WeldMeshResult result = {};
-    result.unique_vertices = (Vertex *)malloc (sizeof (Vertex) * unique_vertex_count);
-    if (!result.unique_vertices)
-    {
-        free (remap_table);
-        return {};
-    }
-
-    result.unique_vertex_count = unique_vertex_count;
-
-    result.indices = remap_table;
-    result.index_count = vertex_count;
-
-    s64 vertex_index = 0;
-    for (int i = 0; i < vertex_count; i += 1)
-    {
-        if (result.indices[i] == i)
-        {
-            result.unique_vertices[vertex_index] = vertices[i];
-            result.indices[i] = vertex_index;
-
-            vertex_index += 1;
-        }
-        else
-        {
-            result.indices[i] = result.indices[result.indices[i]];
-        }
-    }
-
-    Assert (vertex_index == result.unique_vertex_count);
-
-    return result;
-}
-
-static void CalculateFlatNormalsUnindexed (Vertex *vertices, s64 vertex_count)
-{
-    Assert (vertex_count % 3 == 0, "Vertices must form triangles");
-
-    s64 tri_count = vertex_count / 3;
-    for (int i = 0; i < tri_count; i += 1)
-    {
-        Vertex *v = vertices + i * 3;
-
-        Vec3f delta12 = v[2].position - v[1].position;
-        Vec3f delta10 = v[0].position - v[1].position;
-        Vec3f normal = Cross (delta12, delta10);
-        normal = Normalized (normal);
-
-        v[0].normal = normal;
-        v[1].normal = normal;
-        v[2].normal = normal;
-    }
-}
-
-static void CalculateSmoothNormalsIndexed (Vertex *vertices, s64 vertex_count, u32 *indices, s64 index_count)
-{
-    for (int i = 0; i < index_count; i += 3)
-    {
-        Vertex &v0 = vertices[indices[i + 0]];
-        Vertex &v1 = vertices[indices[i + 1]];
-        Vertex &v2 = vertices[indices[i + 2]];
-
-        Vec3f a = v0.position;
-        Vec3f b = v1.position;
-        Vec3f c = v2.position;
-
-        Vec3f bc = c - b;
-        Vec3f ba = a - b;
-        Vec3f normal = Normalized (Cross (bc, ba));
-
-        v0.normal += normal;
-        v1.normal += normal;
-        v2.normal += normal;
-    }
-
-    for (int i = 0; i < vertex_count; i += 1)
-        vertices[i].normal = Normalized (vertices[i].normal);
-}
-
 bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
 {
     auto read_result = ReadEntireFile (filename);
@@ -496,9 +381,11 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
         }
     }
 
+    bool has_normals = normals.count != 0;
     if (normals.count == 0 && (flags & LoadMesh_CalculateNormalsFlat))
     {
-        CalculateFlatNormalsUnindexed (vertices, vertex_count);
+        CalculateNormalsFlat (vertices, vertex_count);
+        has_normals = true;
     }
 
     if (flags & LoadMesh_WeldMesh)
@@ -545,7 +432,13 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
 
     if (normals.count == 0 && (flags & LoadMesh_CalculateNormalsSmooth))
     {
-        CalculateSmoothNormalsIndexed (mesh->vertices, mesh->vertex_count, mesh->indices, mesh->index_count);
+        CalculateNormalsSmooth (mesh->vertices, mesh->vertex_count, mesh->indices, mesh->index_count);
+        has_normals = true;
+    }
+
+    if (tex_coords.count > 0 && has_normals && (flags & LoadMesh_CalculateTangents))
+    {
+        CalculateTangents (mesh->vertices, mesh->vertex_count, mesh->indices, mesh->index_count);
     }
 
     GfxCreateMeshObjects (mesh);

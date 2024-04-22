@@ -19,7 +19,8 @@ where /Q cl.exe || (
 
 set source_files=Source\main.cpp ^
     Source\math.cpp ^
-    Source\obj_file.cpp
+    Source\obj_file.cpp ^
+    Source\mesh.cpp
 
 set compiler_flags= -nologo -Oi -Od -Zi -FC -FoObj\
 set compiler_defines=

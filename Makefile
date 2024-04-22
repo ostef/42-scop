@@ -1,7 +1,7 @@
 OPENGL_NAME=ScopGL
 VULKAN_NAME=ScopVk
 SRC_DIR=Source
-SRC_FILES=main.cpp math.cpp obj_file.cpp
+SRC_FILES=main.cpp math.cpp obj_file.cpp mesh.cpp
 OPENGL_SRC_FILES=opengl_backend.cpp
 VULKAN_SRC_FILES=vulkan_backend.cpp
 
