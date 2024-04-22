@@ -110,19 +110,14 @@ void CalculateNormalsSmooth (Vertex *vertices, s64 vertex_count, u32 *indices, s
 
 void CalculateTangents (Vertex *vertices, s64 vertex_count, u32 *indices, s64 index_count)
 {
-    Vec3f *temp_tangents = (Vec3f *)malloc (sizeof (Vec3f) * vertex_count);
+    Vec3f *temp_tangents = (Vec3f *)malloc (sizeof (Vec3f) * vertex_count * 2);
     if (!temp_tangents)
         return;
     defer (free (temp_tangents));
 
+    Vec3f *temp_bitangents = temp_tangents + vertex_count;
 
-    Vec3f *temp_bitangents = (Vec3f *)malloc (sizeof (Vec3f) * vertex_count);
-    if (!temp_bitangents)
-        return;
-    defer (free (temp_bitangents));
-
-    memset (temp_tangents, 0, sizeof (Vec3f) * vertex_count);
-    memset (temp_bitangents, 0, sizeof (Vec3f) * vertex_count);
+    memset (temp_tangents, 0, sizeof (Vec3f) * vertex_count * 2);
 
     for (int i = 0; i < index_count; i += 3)
     {
