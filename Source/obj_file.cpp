@@ -262,7 +262,7 @@ static void CalculateSmoothNormalsIndexed (Vertex *vertices, s64 vertex_count, u
         vertices[i].normal = Normalized (vertices[i].normal);
 }
 
-bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
+bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
 {
     auto read_result = ReadEntireFile (filename);
     if (!read_result.ok)
@@ -360,10 +360,13 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
                 return false;
             }
 
-            Vec3f *normal = ArrayPush (&normals);
-            normal->x = n0.value;
-            normal->y = n1.value;
-            normal->z = n2.value;
+            if (!(flags & LoadMesh_IgnoreSuppliedNormals))
+            {
+                Vec3f *normal = ArrayPush (&normals);
+                normal->x = n0.value;
+                normal->y = n1.value;
+                normal->z = n2.value;
+            }
         }
         else if (MatchAlphaNumeric (&parser, "f"))
         {
@@ -428,7 +431,8 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
                             return false;
                         }
 
-                        quad.indices[i].normal = n.value;
+                        if (!(flags & LoadMesh_IgnoreSuppliedNormals))
+                            quad.indices[i].normal = n.value;
                     }
                 }
             }
@@ -492,33 +496,54 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh)
         }
     }
 
-    // if (normals.count == 0)
-    // {
-    //     CalculateFlatNormalsUnindexed (vertices, vertex_count);
-    // }
-
-    auto welded_mesh = WeldMesh (vertices, vertex_count);
-
-    free (vertices);
-    vertices = null;
-
-    mesh->vertex_count = welded_mesh.unique_vertex_count;
-    mesh->vertices = welded_mesh.unique_vertices;
-    if (!mesh->vertices)
+    if (normals.count == 0 && (flags & LoadMesh_CalculateNormalsFlat))
     {
-        LogError ("Could not allocate mesh vertices");
-        return false;
+        CalculateFlatNormalsUnindexed (vertices, vertex_count);
     }
 
-    mesh->index_count = welded_mesh.index_count;
-    mesh->indices = welded_mesh.indices;
-    if (!mesh->indices)
+    if (flags & LoadMesh_WeldMesh)
     {
-        LogError ("Could not allocate mesh indices");
-        return false;
+        auto welded_mesh = WeldMesh (vertices, vertex_count);
+
+        free (vertices);
+        vertices = null;
+
+        mesh->vertex_count = welded_mesh.unique_vertex_count;
+        mesh->vertices = welded_mesh.unique_vertices;
+        if (!mesh->vertices)
+        {
+            LogError ("Could not allocate mesh vertices");
+            return false;
+        }
+
+        mesh->index_count = welded_mesh.index_count;
+        mesh->indices = welded_mesh.indices;
+        if (!mesh->indices)
+        {
+            LogError ("Could not allocate mesh indices");
+            return false;
+        }
+    }
+    else
+    {
+        mesh->vertices = vertices;
+        mesh->vertex_count = vertex_count;
+
+        mesh->indices = (u32 *)malloc (sizeof (u32) * vertex_count);
+        mesh->index_count = vertex_count;
+        if (!mesh->indices)
+        {
+            LogError ("Could not allocate mesh indices");
+            return false;
+        }
+
+        for (int i = 0; i < vertex_count; i += 1)
+        {
+            mesh->indices[i] = i;
+        }
     }
 
-    if (normals.count == 0)
+    if (normals.count == 0 && (flags & LoadMesh_CalculateNormalsSmooth))
     {
         CalculateSmoothNormalsIndexed (mesh->vertices, mesh->vertex_count, mesh->indices, mesh->index_count);
     }

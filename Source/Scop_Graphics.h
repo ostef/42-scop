@@ -52,7 +52,17 @@ struct Mesh
 
 void GLFWErrorCallback (int code, const char *description);
 
-bool LoadMeshFromObjFile (const char *filename, Mesh *mesh);
+enum LoadMeshFlags
+{
+    LoadMesh_WeldMesh = 0x01,
+    LoadMesh_CalculateNormalsSmooth = 0x02,
+    LoadMesh_CalculateNormalsFlat = 0x04,
+    LoadMesh_IgnoreSuppliedNormals = 0x08,
+
+    LoadMesh_DefaultFlags = LoadMesh_WeldMesh | LoadMesh_CalculateNormalsSmooth,
+};
+
+bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags = LoadMesh_DefaultFlags);
 
 bool GfxInitBackend ();
 void GfxTerminateBackend ();
