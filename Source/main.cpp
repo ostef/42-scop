@@ -5,8 +5,13 @@
 GLFWwindow *g_main_window = null;
 Camera g_camera;
 
+static float g_model_rotation;
+static Vec3f g_model_position;
+
 #define Camera_Rotate_Speed 0.1
 #define Camera_Movement_Speed 0.1
+#define Model_Rotate_Speed 0.1
+#define Model_Move_Speed 0.1
 
 static Vec2f g_mouse_delta;
 static Vec2f g_mouse_wheel;
@@ -45,10 +50,6 @@ static void UpdateCamera ()
 
         mouse_input = g_mouse_delta;
     }
-    else
-    {
-        glfwSetInputMode (g_main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    }
 
     g_camera.distance_from_target = Clamp (
         g_camera.distance_from_target - g_mouse_wheel.y * 0.5,
@@ -75,6 +76,31 @@ static void UpdateCamera ()
     g_camera.view_matrix = Inverted (transform);
     g_camera.projection_matrix = Mat4fPerspectiveProjection (70, width / (float)height, 0.1, 100.0);
     g_camera.view_projection_matrix = g_camera.projection_matrix * g_camera.view_matrix;
+}
+
+static void UpdateModelTransform ()
+{
+    Vec2f mouse_input = {};
+    if (glfwGetMouseButton (g_main_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    {
+        glfwSetInputMode (g_main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+        mouse_input = g_mouse_delta;
+    }
+
+    g_model_rotation += mouse_input.x * Model_Rotate_Speed;
+
+    Vec3f move_input = {};
+    move_input.x = (glfwGetKey (g_main_window, GLFW_KEY_D) == GLFW_PRESS)
+        - (glfwGetKey (g_main_window, GLFW_KEY_A) == GLFW_PRESS);
+    move_input.y = (glfwGetKey (g_main_window, GLFW_KEY_E) == GLFW_PRESS)
+        - (glfwGetKey (g_main_window, GLFW_KEY_Q) == GLFW_PRESS);
+    move_input.z = (glfwGetKey (g_main_window, GLFW_KEY_W) == GLFW_PRESS)
+        - (glfwGetKey (g_main_window, GLFW_KEY_S) == GLFW_PRESS);
+
+    move_input = Normalized (move_input);
+
+    g_model_position += move_input * Model_Move_Speed;
 }
 
 static void GLFWScrollCallback (GLFWwindow *window, double x, double y)
@@ -249,9 +275,17 @@ int main (int argc, char **argv)
     {
         UpdateInput ();
 
+        if (glfwGetMouseButton (g_main_window, GLFW_MOUSE_BUTTON_LEFT) != GLFW_PRESS
+        && glfwGetMouseButton (g_main_window, GLFW_MOUSE_BUTTON_RIGHT) != GLFW_PRESS)
+            glfwSetInputMode (g_main_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        UpdateModelTransform ();
         UpdateCamera ();
 
-        GfxRenderFrame (&mesh, texture, args.light_position, args.light_color);
+        Mat4f model_matrix = Mat4fTranslate (g_model_position)
+            * Mat4fRotate ({0,1,0}, ToRads (g_model_rotation));
+
+        GfxRenderFrame (&mesh, texture, model_matrix, args.light_position, args.light_color);
     }
 
     return 0;

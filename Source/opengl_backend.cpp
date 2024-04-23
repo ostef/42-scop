@@ -222,7 +222,7 @@ void GfxDestroyTexture (GfxTexture *texture)
     *texture = 0;
 }
 
-void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position, const Vec3f &light_color)
+void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Mat4f &model_matrix, const Vec3f &light_position, const Vec3f &light_color)
 {
     int viewport_width, viewport_height;
     glfwGetFramebufferSize (g_main_window, &viewport_width, &viewport_height);
@@ -240,7 +240,6 @@ void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position
         1, GL_TRUE, &g_camera.view_projection_matrix.r0c0
     );
 
-    Mat4f model_matrix = {};
     glUniformMatrix4fv (
         glGetUniformLocation (g_shader, "u_Model_Matrix"),
         1, GL_TRUE, &model_matrix.r0c0

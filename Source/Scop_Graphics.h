@@ -100,6 +100,6 @@ void GfxCreateMeshObjects (Mesh *mesh);
 void GfxDestroyMeshObjects (Mesh *mesh);
 GfxTexture GfxCreateTexture (void *data, u32 width, u32 height);
 void GfxDestroyTexture (GfxTexture *texture);
-void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position, const Vec3f &light_color);
+void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Mat4f &model_matrix, const Vec3f &light_position, const Vec3f &light_color);
 
 #endif

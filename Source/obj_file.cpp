@@ -321,7 +321,12 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
                 }
             }
 
-            Assert (i == 3 || i == 4, "Face is not a triangle or quad");
+            if (i != 3 && i != 4)
+            {
+                LogError ("Mesh has faces that are neither triangles or quads");
+                return false;
+            }
+
             if (i == 3)
             {
                 OBJTriangleFace *face = ArrayPush (&faces);

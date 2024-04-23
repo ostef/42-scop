@@ -95,6 +95,8 @@ void CalculateNormalsFlat (Vertex *vertices, s64 vertex_count)
 
 void CalculateNormalsSmooth (Vertex *vertices, s64 vertex_count, u32 *indices, s64 index_count)
 {
+    Assert (index_count % 3 == 0, "Vertices must form triangles");
+
     for (int i = 0; i < index_count; i += 3)
     {
         Vertex &v0 = vertices[indices[i + 0]];
