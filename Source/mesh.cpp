@@ -2,6 +2,15 @@
 #include "Scop_Graphics.h"
 #include "Scop_Math.h"
 
+void DestroyMesh (Mesh *mesh)
+{
+    GfxDestroyMeshObjects (mesh);
+    free (mesh->vertices);
+    free (mesh->indices);
+
+    *mesh = {};
+}
+
 WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
 {
     u32 *remap_table = (u32 *)malloc (sizeof (u32) * vertex_count);

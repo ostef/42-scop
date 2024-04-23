@@ -191,7 +191,38 @@ void GfxCreateMeshObjects (Mesh *mesh)
     glBindVertexArray (0);
 }
 
-void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position)
+void GfxDestroyMeshObjects (Mesh *mesh)
+{
+    glDeleteBuffers (2, mesh->gfx_objects.buffers);
+    glDeleteVertexArrays (1, &mesh->gfx_objects.vao);
+
+    mesh->gfx_objects.vao = 0;
+    mesh->gfx_objects.vbo = 0;
+    mesh->gfx_objects.ibo = 0;
+}
+
+GfxTexture GfxCreateTexture (void *data, u32 width, u32 height)
+{
+    GLuint tex;
+    glGenTextures (1, &tex);
+    glBindTexture (GL_TEXTURE_2D, tex);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture (GL_TEXTURE_2D, 0);
+
+    return tex;
+}
+
+void GfxDestroyTexture (GfxTexture *texture)
+{
+    glDeleteTextures (1, texture);
+    *texture = 0;
+}
+
+void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position, const Vec3f &light_color)
 {
     int viewport_width, viewport_height;
     glfwGetFramebufferSize (g_main_window, &viewport_width, &viewport_height);
@@ -220,6 +251,13 @@ void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position
         light_position.x, light_position.y, light_position.z
     );
 
+    glUniform3f (
+        glGetUniformLocation (g_shader, "u_Light_Color"),
+        light_color.x, light_color.y, light_color.z
+    );
+
+    glUniform1i (glGetUniformLocation (g_shader, "u_Has_Texture"), texture != 0);
+
     glBindTexture (GL_TEXTURE_2D, texture);
 
     glBindVertexArray (mesh->gfx_objects.vao);
@@ -235,19 +273,4 @@ void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position
     glBindVertexArray (0);
 
     glfwSwapBuffers (g_main_window);
-}
-
-GfxTexture GfxCreateTexture (void *data, u32 width, u32 height)
-{
-    GLuint tex;
-    glGenTextures (1, &tex);
-    glBindTexture (GL_TEXTURE_2D, tex);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glBindTexture (GL_TEXTURE_2D, 0);
-
-    return tex;
 }

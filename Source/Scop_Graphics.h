@@ -88,15 +88,18 @@ enum LoadMeshFlags
 };
 
 bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags = LoadMesh_DefaultFlags);
-
 bool LoadTextureFromFile (const char *filename, GfxTexture *texture, u32 *width, u32 *height);
+
+void DestroyMesh (Mesh *mesh);
 
 void GLFWErrorCallback (int code, const char *description);
 
 bool GfxInitBackend ();
 void GfxTerminateBackend ();
 void GfxCreateMeshObjects (Mesh *mesh);
+void GfxDestroyMeshObjects (Mesh *mesh);
 GfxTexture GfxCreateTexture (void *data, u32 width, u32 height);
-void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position);
+void GfxDestroyTexture (GfxTexture *texture);
+void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Vec3f &light_position, const Vec3f &light_color);
 
 #endif

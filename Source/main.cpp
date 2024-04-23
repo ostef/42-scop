@@ -11,6 +11,14 @@ Camera g_camera;
 static Vec2f g_mouse_delta;
 static Vec2f g_mouse_wheel;
 
+struct ProgramArguments
+{
+    const char *mesh_filename = null;
+    const char *texture_filename = null;
+    Vec3f light_position = {0,0,0};
+    Vec3f light_color = {1,0,1};
+};
+
 static void UpdateInput ()
 {
     g_mouse_wheel = {};
@@ -75,7 +83,124 @@ static void GLFWScrollCallback (GLFWwindow *window, double x, double y)
     g_mouse_wheel.y += (float)y;
 }
 
-int main (int argc, char **args)
+static bool ParseFloat (const char *str, float *result)
+{
+    *result = 0.0f;
+
+    char *end;
+    float f = strtof (str, &end);
+    if (end != str + strlen (str))
+        return false;
+
+    *result = f;
+
+    return true;
+}
+
+static bool ParseProgramArguments (int argc, char **argv, ProgramArguments *result)
+{
+    const char *Usage = "Usage: ScopGL mesh_filename [texture_filename] [light_x light_y light_z] [light_r light_g light_b]";
+
+    if (argc <= 1)
+    {
+        LogError ("Missing mesh argument");
+        LogMessage (Usage);
+        return false;
+    }
+
+    argc -= 1;
+    argv += 1;
+
+    result->mesh_filename = *argv;
+    argc -= 1;
+    argv += 1;
+
+    if (argc == 0)
+        return true;
+
+    result->texture_filename = *argv;
+    argc -= 1;
+    argv += 1;
+
+    if (argc == 0)
+        return true;
+
+    if (argc < 3)
+    {
+        if (argc == 2)
+            LogError ("Missing light position Z component");
+        else if (argc == 1)
+            LogError ("Missing light position Y and Z components");
+
+        return false;
+    }
+
+    if (!ParseFloat (argv[0], &result->light_position.x))
+    {
+        LogError ("Invalid argument for light X position");
+        return false;
+    }
+
+    if (!ParseFloat (argv[1], &result->light_position.y))
+    {
+        LogError ("Invalid argument for light Y position");
+        return false;
+    }
+
+    if (!ParseFloat (argv[2], &result->light_position.z))
+    {
+        LogError ("Invalid argument for light Z position");
+        return false;
+    }
+
+    argc -= 3;
+    argv += 3;
+
+    if (argc == 0)
+        return true;
+
+    if (argc < 3)
+    {
+        if (argc == 2)
+            LogError ("Missing light color B component");
+        else if (argc == 1)
+            LogError ("Missing light color G and B components");
+
+        return false;
+    }
+
+    if (!ParseFloat (argv[0], &result->light_color.x))
+    {
+        LogError ("Invalid argument for light R color component");
+        return false;
+    }
+
+    if (!ParseFloat (argv[1], &result->light_color.y))
+    {
+        LogError ("Invalid argument for light G color component");
+        return false;
+    }
+
+    if (!ParseFloat (argv[2], &result->light_color.z))
+    {
+        LogError ("Invalid argument for light B color component");
+        return false;
+    }
+
+    argc -= 3;
+    argv += 3;
+
+    if (argc != 0)
+    {
+        LogError ("Too many arguments");
+        LogMessage (Usage);
+        return false;
+    }
+
+    return true;
+}
+
+int main (int argc, char **argv)
 {
     bool gfx_ok = GfxInitBackend ();
     if (!gfx_ok)
@@ -91,20 +216,33 @@ int main (int argc, char **args)
 
     glfwSetScrollCallback (g_main_window, GLFWScrollCallback);
 
-    const char *texture_filename = "Data/uv.png";
-    GfxTexture texture;
-    if (!LoadTextureFromFile (texture_filename, &texture, null, null))
-        LogError ("Could not load texture '%s'", texture_filename);
+    ProgramArguments args = {};
 
-    Mesh mannequin_mesh = {};
-    const char *mesh_filename = "Data/teapot.obj";
-    bool ok = LoadMeshFromObjFile (mesh_filename, &mannequin_mesh);
-    if (!ok)
-        LogError ("Could not load mesh '%s'", mesh_filename);
+    if (!ParseProgramArguments (argc, argv, &args))
+        return 1;
 
-    Vec3f light_position = {-10,10,-10};
+    GfxTexture texture = {};
+    if (args.texture_filename)
+    {
+        if (!LoadTextureFromFile (args.texture_filename, &texture, null, null))
+        {
+            LogError ("Could not load texture '%s'", args.texture_filename);
+            return 1;
+        }
+    }
 
-    g_camera.target = (mannequin_mesh.aabb_min + mannequin_mesh.aabb_max) * 0.5;
+    defer (GfxDestroyTexture (&texture));
+
+    Mesh mesh = {};
+    if (!LoadMeshFromObjFile (args.mesh_filename, &mesh))
+    {
+        LogError ("Could not load mesh '%s'", args.mesh_filename);
+        return 1;
+    }
+
+    defer (DestroyMesh (&mesh));
+
+    g_camera.target = (mesh.aabb_min + mesh.aabb_max) * 0.5;
     g_camera.distance_from_target = 3;
 
     while (!glfwWindowShouldClose (g_main_window))
@@ -113,7 +251,7 @@ int main (int argc, char **args)
 
         UpdateCamera ();
 
-        GfxRenderFrame (&mannequin_mesh, texture, light_position);
+        GfxRenderFrame (&mesh, texture, args.light_position, args.light_color);
     }
 
     return 0;
@@ -215,6 +353,8 @@ bool LoadTextureFromFile (const char *filename, GfxTexture *texture, u32 *width,
         *width = x;
     if (height)
         *height = y;
+
+    LogMessage ("Loaded texture %s, %u by %u px", filename, x, y);
 
     return true;
 }
