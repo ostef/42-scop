@@ -152,7 +152,6 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
     auto read_result = ReadEntireFile (filename);
     if (!read_result.ok)
     {
-        LogError ("Could not read file '%s'", filename);
         return false;
     }
 
