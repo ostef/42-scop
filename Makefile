@@ -34,7 +34,7 @@ CC=clang
 C_FLAGS=$(addprefix -I, $(INCLUDE_DIRS))
 
 CPP=c++
-CPP_FLAGS=$(addprefix -I, $(INCLUDE_DIRS)) -std=c++11
+CPP_FLAGS=$(addprefix -I, $(INCLUDE_DIRS)) -std=c++11 -Wall -Wextra -Werror
 
 all: $(OPENGL_NAME)
 
@@ -56,7 +56,8 @@ $(VULKAN_NAME): $(addprefix $(VULKAN_OBJ_DIR)/, $(OBJ_FILES)) $(addprefix $(VULK
 	$(CPP) $(CPP_FLAGS) $(addprefix $(VULKAN_OBJ_DIR)/, $(OBJ_FILES)) $(addprefix $(VULKAN_OBJ_DIR)/, $(VULKAN_OBJ_FILES)) $(addprefix -L, $(LIB_DIRS)) $(addprefix -l, $(LIBS)) $(addprefix -framework , $(VULKAN_FRAMEWORKS)) -o $(VULKAN_NAME)
 
 clean:
-	rm -rf $(OBJ_DIR)
+	rm -rf $(OPENGL_OBJ_DIR)
+	rm -rf $(VULKAN_OBJ_DIR)
 
 fclean: clean
 	rm -f $(OPENGL_NAME)
