@@ -378,10 +378,10 @@ Quatf &Quatf::operator /= (float b) { *this = *this / b; return *this; }
 
 Mat4f Inverted (const Mat4f &m)
 {
-    Vec3f a = {m.r0c0, m.r1c0, m.r2c0};
-    Vec3f b = {m.r0c1, m.r1c1, m.r2c1};
-    Vec3f c = {m.r0c2, m.r1c2, m.r2c2};
-    Vec3f d = {m.r0c3, m.r1c3, m.r2c3};
+    Vec3f a = Vec3f{m.r0c0, m.r1c0, m.r2c0};
+    Vec3f b = Vec3f{m.r0c1, m.r1c1, m.r2c1};
+    Vec3f c = Vec3f{m.r0c2, m.r1c2, m.r2c2};
+    Vec3f d = Vec3f{m.r0c3, m.r1c3, m.r2c3};
 
     float x = m.r3c0;
     float y = m.r3c1;
@@ -475,13 +475,13 @@ static Mat4f AlignZ (Vec3f axis, Vec3f up)
 
     if (ApproxZero (ylen, 0.00001))
     {
-        Vec3f k = {1,0,0};
+        Vec3f k = Vec3f{1,0,0};
         y = k - axis * Dot (k, axis);
         ylen = Length (y);
 
         if (ApproxZero (ylen, 0.00001))
         {
-            Vec3f k = {0,0,1};
+            Vec3f k = Vec3f{0,0,1};
             y = k - axis * Dot (k, axis);
             ylen = Length (y);
         }
@@ -500,8 +500,8 @@ static Mat4f AlignZ (Vec3f axis, Vec3f up)
 
 Mat4f Mat4fLookAt (const Vec3f &position, const Vec3f &target, const Vec3f &up)
 {
-    auto direction = Normalized (target - position, {0,0,1});
-    auto up_vector = Normalized (up, {0,1,0});
+    auto direction = Normalized (target - position, Vec3f{0,0,1});
+    auto up_vector = Normalized (up, Vec3f{0,1,0});
     auto result = AlignZ (direction, up_vector);
     result.r0c3 = position.x;
     result.r1c3 = position.y;
@@ -529,7 +529,7 @@ Mat4f Mat4fPerspectiveProjection (float fovy, float aspect, float znear, float z
 
 Mat4f Mul (const Mat4f &a, const Mat4f &b)
 {
-    Mat4f result = {};
+    Mat4f result = Mat4f{};
 
     result.r0c0 = a.r0c0 * b.r0c0 + a.r0c1 * b.r1c0 + a.r0c2 * b.r2c0 + a.r0c3 * b.r3c0;
     result.r0c1 = a.r0c0 * b.r0c1 + a.r0c1 * b.r1c1 + a.r0c2 * b.r2c1 + a.r0c3 * b.r3c1;

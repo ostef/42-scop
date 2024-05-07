@@ -8,7 +8,7 @@ void DestroyMesh (Mesh *mesh)
     free (mesh->vertices);
     free (mesh->indices);
 
-    *mesh = {};
+    memset (mesh, 0, sizeof (Mesh));
 }
 
 WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
@@ -176,14 +176,14 @@ void CalculateTangents (Vertex *vertices, s64 vertex_count, u32 *indices, s64 in
         Vec3f tangent = Normalized (Reject (t, n));
         float tangent_sign = (Dot (Cross (t, b), n) > 0) ? 1.0f : -1.0;
 
-        vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangent_sign};
+        vertices[i].tangent = Vec4f{tangent.x, tangent.y, tangent.z, tangent_sign};
     }
 }
 
 void CalculateBoundingBox (Mesh *mesh)
 {
-    mesh->aabb_min = {FLT_MAX, FLT_MAX, FLT_MAX};
-    mesh->aabb_max = {-FLT_MAX, -FLT_MAX, -FLT_MAX};
+    mesh->aabb_min = Vec3f{FLT_MAX, FLT_MAX, FLT_MAX};
+    mesh->aabb_max = Vec3f{-FLT_MAX, -FLT_MAX, -FLT_MAX};
     for (int i = 0; i < mesh->vertex_count; i += 1)
     {
         mesh->aabb_min.x = Min (mesh->aabb_min.x, mesh->vertices[i].position.x);

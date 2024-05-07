@@ -375,13 +375,13 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
             if (index > 0)
                 v->normal = normals[index - 1];
             else
-                v->normal = {};
+                v->normal = Vec3f{};
 
             index = faces[f].indices[i].tex_coords;
             if (index > 0)
                 v->tex_coords = tex_coords[index - 1];
             else
-                v->tex_coords = {};
+                v->tex_coords = Vec2f{};
         }
     }
 

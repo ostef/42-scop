@@ -1,5 +1,4 @@
-#ifndef SCOP_CORE_H
-#define SCOP_CORE_H
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -8,8 +7,18 @@
 #include <string.h>
 #include <ctype.h>
 
-typedef uint8_t  u8;
-typedef  int8_t  s8;
+#if defined (__linux__)
+#define SCOP_PLATFORM_LINUX
+#elif defined (_WIN32)
+#define SCOP_PLATFORM_WINDOWS
+#elif defined (__MACH__)
+#define SCOP_PLATFORM_MACOS
+#else
+#error "Unsupported platform"
+#endif
+
+typedef  uint8_t  u8;
+typedef   int8_t  s8;
 typedef uint16_t u16;
 typedef  int16_t s16;
 typedef uint32_t u32;
@@ -24,7 +33,12 @@ typedef double f64;
 
 static char g_assert_failure_message_buffer[10000];
 
+#if defined (SCOP_PLATFORM_WINDOWS)
 #define DebugBreak() __debugbreak ()
+#elif defined (SCOP_PLATFORM_LINUX)
+#define DebugBreak() asm ("int3")
+#elif defined (SCOP_PLATFORM_MACOS)
+#endif
 
 #define Panic(...) do { \
         snprintf (g_assert_failure_message_buffer, 10000, "" __VA_ARGS__); \
@@ -206,5 +220,3 @@ Result<String> ReadEntireFile (const char *filename);
 void LogMessage (const char *str, ...);
 void LogWarning (const char *str, ...);
 void LogError (const char *str, ...);
-
-#endif

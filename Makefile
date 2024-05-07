@@ -1,3 +1,5 @@
+UNAME=$(shell uname)
+
 OPENGL_NAME=ScopGL
 VULKAN_NAME=ScopVk
 SRC_DIR=Source
@@ -14,16 +16,25 @@ INCLUDE_DIRS=Source Third_Party/glfw-3.4/include Third_Party/glad/include
 OPENGL_DEFINES=SCOP_BACKEND_OPENGL
 VULKAN_DEFINES=SCOP_BACKEND_VULKAN
 
+ifeq ($(UNAME), Linux)
+
+LIB_DIRS=
+
+else ifeq ($(UNAME), Darwin)
+
 LIB_DIRS=Third_Party/glfw-3.4/lib-macos-universal
-LIBS=glfw3
 OPENGL_FRAMEWORKS=CoreVideo OpenGL IOKit Cocoa Carbon
 VULKAN_FRAMEWORKS=CoreVideo IOKit Cocoa Carbon
+
+endif
+
+LIBS=glfw
 
 CC=clang
 C_FLAGS=$(addprefix -I, $(INCLUDE_DIRS))
 
 CPP=c++
-CPP_FLAGS=$(addprefix -I, $(INCLUDE_DIRS)) -std=c++11
+CPP_FLAGS=$(addprefix -I, $(INCLUDE_DIRS)) -std=c++11 -v
 
 all: $(OPENGL_NAME)
 

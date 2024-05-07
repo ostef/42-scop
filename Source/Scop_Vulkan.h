@@ -1,5 +1,4 @@
-#ifndef SCOP_VULKAN_H
-#define SCOP_VULKAN_H
+#pragma once
 
 #define SCOP_BACKEND_NAME "OpenGL 3.3"
 
@@ -15,5 +14,3 @@ extern VkSwapchainKHR g_vk_swapchain;
 extern VkFormat g_vk_swapchain_image_format;
 extern Array<VkImage> g_vk_swapchain_images;
 extern Array<VkImageView> g_vk_swapchain_image_views;
-
-#endif
