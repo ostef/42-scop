@@ -16,6 +16,9 @@
 
 #include "stb_image.h"
 
+#define SCOP_WINDOW_WIDTH 2300
+#define SCOP_WINDOW_HEIGHT 1800
+
 #include <GLFW/glfw3.h>
 
 struct Camera
@@ -99,4 +102,16 @@ void GfxCreateMeshObjects (Mesh *mesh);
 void GfxDestroyMeshObjects (Mesh *mesh);
 GfxTexture GfxCreateTexture (void *data, u32 width, u32 height);
 void GfxDestroyTexture (GfxTexture *texture);
-void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Mat4f &model_matrix, const Vec3f &light_position, const Vec3f &light_color);
+
+struct RenderFrameParams
+{
+    Mesh *mesh;
+    GfxTexture texture;
+    float texture_alpha;
+    Vec3f model_color;
+    Mat4f model_matrix;
+    Vec3f light_position;
+    Vec3f light_color;
+};
+
+void GfxRenderFrame (const RenderFrameParams &params);

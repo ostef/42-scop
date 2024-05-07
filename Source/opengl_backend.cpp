@@ -127,9 +127,9 @@ bool GfxInitBackend ()
     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     char window_title[100];
-    snprintf (window_title, sizeof (window_title), "Scop (%s backend)", SCOP_BACKEND_NAME);
+    snprintf (window_title, sizeof (window_title), "Scop (%s)", SCOP_BACKEND_NAME);
 
-    g_main_window = glfwCreateWindow (1280, 720, window_title, null, null);
+    g_main_window = glfwCreateWindow (SCOP_WINDOW_WIDTH, SCOP_WINDOW_HEIGHT, window_title, null, null);
     if (!g_main_window)
     {
         LogError ("Could not create GLFW window");
@@ -222,7 +222,7 @@ void GfxDestroyTexture (GfxTexture *texture)
     *texture = 0;
 }
 
-void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Mat4f &model_matrix, const Vec3f &light_position, const Vec3f &light_color)
+void GfxRenderFrame (const RenderFrameParams &params)
 {
     int viewport_width, viewport_height;
     glfwGetFramebufferSize (g_main_window, &viewport_width, &viewport_height);
@@ -242,28 +242,33 @@ void GfxRenderFrame (Mesh *mesh, GfxTexture texture, const Mat4f &model_matrix, 
 
     glUniformMatrix4fv (
         glGetUniformLocation (g_shader, "u_Model_Matrix"),
-        1, GL_TRUE, &model_matrix.r0c0
+        1, GL_TRUE, &params.model_matrix.r0c0
     );
 
     glUniform3f (
         glGetUniformLocation (g_shader, "u_Light_Position"),
-        light_position.x, light_position.y, light_position.z
+        params.light_position.x, params.light_position.y, params.light_position.z
     );
 
     glUniform3f (
         glGetUniformLocation (g_shader, "u_Light_Color"),
-        light_color.x, light_color.y, light_color.z
+        params.light_color.x, params.light_color.y, params.light_color.z
     );
 
-    glUniform1i (glGetUniformLocation (g_shader, "u_Has_Texture"), texture != 0);
+    glUniform3f (
+        glGetUniformLocation (g_shader, "u_Model_Color"),
+        params.model_color.x, params.model_color.y, params.model_color.z
+    );
 
-    glBindTexture (GL_TEXTURE_2D, texture);
+    glUniform1f (glGetUniformLocation (g_shader, "u_Texture_Alpha"), params.texture_alpha);
 
-    glBindVertexArray (mesh->gfx_objects.vao);
-    glBindBuffer (GL_ARRAY_BUFFER, mesh->gfx_objects.vbo);
-    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, mesh->gfx_objects.ibo);
+    glBindTexture (GL_TEXTURE_2D, params.texture);
 
-    glDrawElements (GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, null);
+    glBindVertexArray (params.mesh->gfx_objects.vao);
+    glBindBuffer (GL_ARRAY_BUFFER, params.mesh->gfx_objects.vbo);
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, params.mesh->gfx_objects.ibo);
+
+    glDrawElements (GL_TRIANGLES, params.mesh->index_count, GL_UNSIGNED_INT, null);
 
     glBindTexture (GL_TEXTURE_2D, 0);
 

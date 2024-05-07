@@ -20,7 +20,7 @@ struct ProgramArguments
 {
     const char *mesh_filename = null;
     const char *texture_filename = null;
-    Vec3f light_position = Vec3f{0,0,0};
+    Vec3f light_position = Vec3f{10,10,10};
     Vec3f light_color = Vec3f{1,1,1};
 };
 
@@ -272,9 +272,18 @@ int main (int argc, char **argv)
     g_camera.target = (mesh.aabb_min + mesh.aabb_max) * 0.5;
     g_camera.distance_from_target = 3;
 
+    bool space_pressed_last_frame = false;
+    bool space_pressed_this_frame = false;
+
+    float timer = 0;
+    float texture_alpha = 0;
+    bool show_texture = true;
     while (!glfwWindowShouldClose (g_main_window))
     {
         UpdateInput ();
+
+        space_pressed_last_frame = space_pressed_this_frame;
+        space_pressed_this_frame = glfwGetKey (g_main_window, GLFW_KEY_SPACE) == GLFW_PRESS;
 
         if (glfwGetMouseButton (g_main_window, GLFW_MOUSE_BUTTON_LEFT) != GLFW_PRESS
         && glfwGetMouseButton (g_main_window, GLFW_MOUSE_BUTTON_RIGHT) != GLFW_PRESS)
@@ -283,10 +292,28 @@ int main (int argc, char **argv)
         UpdateModelTransform ();
         UpdateCamera ();
 
-        Mat4f model_matrix = Mat4fTranslate (g_model_position)
-            * Mat4fRotate (Vec3f{0,1,0}, ToRads (g_model_rotation));
+        if (!space_pressed_last_frame && space_pressed_this_frame)
+            show_texture = !show_texture;
 
-        GfxRenderFrame (&mesh, texture, model_matrix, args.light_position, args.light_color);
+        if (show_texture)
+            texture_alpha = Lerp (texture_alpha, 1, 0.1);
+        else
+            texture_alpha = Lerp (texture_alpha, 0, 0.1);
+
+        RenderFrameParams params;
+        memset (&params, 0, sizeof (params));
+        params.mesh = &mesh;
+        params.texture = texture;
+        params.texture_alpha = texture ? texture_alpha : 0.0f;
+        params.model_color = Vec3f{1, 1, 1};
+        params.model_matrix = Mat4fTranslate (g_model_position)
+            * Mat4fRotate (Vec3f{0,1,0}, ToRads (g_model_rotation));
+        params.light_position = args.light_position;
+        params.light_color = args.light_color;
+
+        GfxRenderFrame (params);
+
+        timer += 1 / 60.0f;
     }
 
     return 0;
