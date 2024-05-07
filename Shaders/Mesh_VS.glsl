@@ -13,9 +13,11 @@ out vec2 Tex_Coords;
 
 void main ()
 {
-    gl_Position = u_View_Projection_Matrix * u_Model_Matrix * vec4 (v_Position, 1);
+    vec4 world_position = u_Model_Matrix * vec4 (v_Position, 1);
+    gl_Position = u_View_Projection_Matrix * world_position;
 
-    Vertex_Position = v_Position;
-    Normal = v_Normal;
+    mat3 normal_matrix = transpose (inverse (mat3 (u_Model_Matrix)));
+    Vertex_Position = world_position.xyz;
+    Normal = normal_matrix * v_Normal;
     Tex_Coords = v_Tex_Coords;
 }

@@ -13,7 +13,7 @@ uniform sampler2D u_Texture;
 
 void main ()
 {
-    vec3 normal = Normal * float (gl_FrontFacing) * 2 - 1;
+    vec3 normal = Normal * (float (gl_FrontFacing) * 2 - 1);
     normal = normalize (normal);
 
     vec3 vertex_to_light = normalize (u_Light_Position - Vertex_Position);
@@ -25,5 +25,5 @@ void main ()
     else
         diffuse = vec3 (1,1,1);
 
-    Frag_Color = vec4 (diffuse * u_Light_Color * diffuse_factor,1);
+    Frag_Color = vec4 (diffuse * u_Light_Color * diffuse_factor, 1);
 }
