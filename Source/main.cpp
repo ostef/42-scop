@@ -20,13 +20,13 @@ struct ProgramArguments
 {
     const char *mesh_filename = null;
     const char *texture_filename = null;
-    Vec3f light_position = {0,0,0};
-    Vec3f light_color = {1,0,1};
+    Vec3f light_position = Vec3f{0,0,0};
+    Vec3f light_color = Vec3f{1,1,1};
 };
 
 static void UpdateInput ()
 {
-    g_mouse_wheel = {};
+    g_mouse_wheel = Vec2f{};
 
     double x, y;
     glfwGetCursorPos (g_main_window, &x, &y);
@@ -42,7 +42,7 @@ static void UpdateInput ()
 
 static void UpdateCamera ()
 {
-    Vec2f mouse_input = {};
+    Vec2f mouse_input = Vec2f{};
 
     if (glfwGetMouseButton (g_main_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
     {
@@ -60,8 +60,8 @@ static void UpdateCamera ()
     g_camera.yaw_pitch.y += mouse_input.y * Camera_Rotate_Speed;
     g_camera.yaw_pitch.y = Clamp (g_camera.yaw_pitch.y, -90, 90);
 
-    Mat4f rotation_matrix = Mat4fRotate ({0,1,0}, ToRads (g_camera.yaw_pitch.x))
-        * Mat4fRotate ({1,0,0}, ToRads (g_camera.yaw_pitch.y));
+    Mat4f rotation_matrix = Mat4fRotate (Vec3f{0,1,0}, ToRads (g_camera.yaw_pitch.x))
+        * Mat4fRotate (Vec3f{1,0,0}, ToRads (g_camera.yaw_pitch.y));
 
     g_camera.position =
         g_camera.target
@@ -80,7 +80,7 @@ static void UpdateCamera ()
 
 static void UpdateModelTransform ()
 {
-    Vec2f mouse_input = {};
+    Vec2f mouse_input = Vec2f{};
     if (glfwGetMouseButton (g_main_window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
     {
         glfwSetInputMode (g_main_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -90,7 +90,7 @@ static void UpdateModelTransform ()
 
     g_model_rotation += mouse_input.x * Model_Rotate_Speed;
 
-    Vec3f move_input = {};
+    Vec3f move_input = Vec3f{};
     move_input.x = (glfwGetKey (g_main_window, GLFW_KEY_D) == GLFW_PRESS)
         - (glfwGetKey (g_main_window, GLFW_KEY_A) == GLFW_PRESS);
     move_input.y = (glfwGetKey (g_main_window, GLFW_KEY_E) == GLFW_PRESS)
@@ -247,7 +247,7 @@ int main (int argc, char **argv)
     if (!ParseProgramArguments (argc, argv, &args))
         return 1;
 
-    GfxTexture texture = {};
+    GfxTexture texture = 0;
     if (args.texture_filename)
     {
         if (!LoadTextureFromFile (args.texture_filename, &texture, null, null))
@@ -259,7 +259,8 @@ int main (int argc, char **argv)
 
     defer (GfxDestroyTexture (&texture));
 
-    Mesh mesh = {};
+    Mesh mesh;
+    memset(&mesh, 0, sizeof (Mesh));
     if (!LoadMeshFromObjFile (args.mesh_filename, &mesh))
     {
         LogError ("Could not load mesh '%s'", args.mesh_filename);
@@ -283,7 +284,7 @@ int main (int argc, char **argv)
         UpdateCamera ();
 
         Mat4f model_matrix = Mat4fTranslate (g_model_position)
-            * Mat4fRotate ({0,1,0}, ToRads (g_model_rotation));
+            * Mat4fRotate (Vec3f{0,1,0}, ToRads (g_model_rotation));
 
         GfxRenderFrame (&mesh, texture, model_matrix, args.light_position, args.light_color);
     }

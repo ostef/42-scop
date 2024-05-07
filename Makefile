@@ -34,7 +34,7 @@ CC=clang
 C_FLAGS=$(addprefix -I, $(INCLUDE_DIRS))
 
 CPP=c++
-CPP_FLAGS=$(addprefix -I, $(INCLUDE_DIRS)) -std=c++11 -v
+CPP_FLAGS=$(addprefix -I, $(INCLUDE_DIRS)) -std=c++11
 
 all: $(OPENGL_NAME)
 
