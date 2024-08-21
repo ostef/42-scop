@@ -368,27 +368,27 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
         {
             Vertex *v = &vertices[f * 3 + i];
 
-            int index = faces[f].indices[i].position;
+            int index = faces[f].indices[i].position - 1;
             if (index < 0 || index >= positions.count)
                 return false;
 
-            v->position = positions[index - 1];
+            v->position = positions[index];
 
-            index = faces[f].indices[i].normal;
+            index = faces[f].indices[i].normal - 1;
             if (index >= normals.count)
                 return false;
 
-            if (index > 0)
-                v->normal = normals[index - 1];
+            if (index >= 0)
+                v->normal = normals[index];
             else
                 v->normal = Vec3f{};
 
-            index = faces[f].indices[i].tex_coords;
+            index = faces[f].indices[i].tex_coords - 1;
             if (index >= tex_coords.count)
                 return false;
 
-            if (index > 0)
-                v->tex_coords = tex_coords[index - 1];
+            if (index >= 0)
+                v->tex_coords = tex_coords[index];
             else
                 v->tex_coords = Vec2f{};
         }
