@@ -369,15 +369,24 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
             Vertex *v = &vertices[f * 3 + i];
 
             int index = faces[f].indices[i].position;
+            if (index < 0 || index >= positions.count)
+                return false;
+
             v->position = positions[index - 1];
 
             index = faces[f].indices[i].normal;
+            if (index >= normals.count)
+                return false;
+
             if (index > 0)
                 v->normal = normals[index - 1];
             else
                 v->normal = Vec3f{};
 
             index = faces[f].indices[i].tex_coords;
+            if (index >= tex_coords.count)
+                return false;
+
             if (index > 0)
                 v->tex_coords = tex_coords[index - 1];
             else
