@@ -1,6 +1,42 @@
 #include "Scop_Core.h"
 #include "Scop_Math.h"
 
+#define Rand_Range 0x10000000
+#define M 0x7fffffff
+
+static int g_random_state = 0x1234 & M;
+
+void RandomSeed (int seed)
+{
+    g_random_state = seed & M;
+    if (g_random_state == 0 || g_random_state == 1)
+        g_random_state += 2;
+}
+
+int RandomGetInt ()
+{
+    auto hi = g_random_state / 127773;
+    auto lo = g_random_state % 127773;
+    g_random_state = 16807 * lo - 2836 * hi;
+    if (g_random_state <= 0)
+        g_random_state += M;
+
+    return g_random_state;
+}
+
+int RandomGetIntInRange (int low, int high)
+{
+    return (int)RandomGetFloatInRange (low, high);
+}
+
+float RandomGetFloatInRange (float low, float high)
+{
+    auto rand = RandomGetInt () & (Rand_Range - 1);
+    auto t = (rand / (float)Rand_Range) * (high - low);
+
+    return low + t;
+}
+
 Vec2f Add (const Vec2f &a, const Vec2f &b)
 {
     return Vec2f{

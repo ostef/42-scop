@@ -15,6 +15,11 @@
 #define Lerp(a, b, t) ((a) * (1 - (t)) + (b) * (t))
 #define InverseLerp(a, b, v) (((v) - (a)) / ((b) - (a)))
 
+void RandomSeed (int seed);
+int RandomGetInt ();
+int RandomGetIntInRange (int low, int high);
+float RandomGetFloatInRange (float low, float high);
+
 struct Vec2f
 {
     float x = 0;
