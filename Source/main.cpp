@@ -74,7 +74,7 @@ static void UpdateCamera ()
     glfwGetFramebufferSize (g_main_window, &width, &height);
 
     g_camera.view_matrix = Inverted (transform);
-    g_camera.projection_matrix = Mat4fPerspectiveProjection (70, width / (float)height, 0.1, 100.0);
+    g_camera.projection_matrix = Mat4fPerspectiveProjection (70, width / (float)height, 0.1);
     g_camera.view_projection_matrix = g_camera.projection_matrix * g_camera.view_matrix;
 }
 
@@ -105,6 +105,7 @@ static void UpdateModelTransform ()
 
 static void GLFWScrollCallback (GLFWwindow *window, double x, double y)
 {
+    (void)window;
     g_mouse_wheel.x += (float)x;
     g_mouse_wheel.y += (float)y;
 }
@@ -321,6 +322,7 @@ int main (int argc, char **argv)
 
 void GLFWErrorCallback (int code, const char *description)
 {
+    (void)code;
     if (description)
         LogError ("GLFW: %s", description);
 }

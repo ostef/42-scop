@@ -138,7 +138,7 @@ struct Array
     inline T &operator [] (s64 index)
     {
         Assert (index >= 0 && index < count,
-            "Array bounds check failed (attempted index is %lld, count is %lld)",
+            "Array bounds check failed (attempted index is %ld, count is %ld)",
             index, count
         );
 
@@ -148,7 +148,7 @@ struct Array
     inline const T &operator [] (s64 index) const
     {
         Assert (index >= 0 && index < count,
-            "Array bounds check failed (attempted index is %lld, count is %lld)",
+            "Array bounds check failed (attempted index is %ld, count is %ld)",
             index, count
         );
 

@@ -461,7 +461,7 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
 
     GfxCreateMeshObjects (mesh);
 
-    LogMessage ("Loaded mesh '%s', %lld vertices, %lld indices", filename, mesh->vertex_count, mesh->index_count);
+    LogMessage ("Loaded mesh '%s', %ld vertices, %ld indices", filename, mesh->vertex_count, mesh->index_count);
 
     return true;
 }

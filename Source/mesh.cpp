@@ -21,13 +21,13 @@ WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
         remap_table[i] = i;
 
     s64 unique_vertex_count = vertex_count;
-    for (int i = 0; i < vertex_count; i += 1)
+    for (u32 i = 0; i < vertex_count; i += 1)
     {
         // If already remapped
         if (remap_table[i] != i)
             continue;
 
-        for (int j = i + 1; j < vertex_count; j += 1)
+        for (u32 j = i + 1; j < vertex_count; j += 1)
         {
             if (vertices[i].position == vertices[j].position
             && vertices[i].normal == vertices[j].normal
@@ -53,7 +53,7 @@ WeldMeshResult WeldMesh (Vertex *vertices, u32 vertex_count)
     result.index_count = vertex_count;
 
     s64 vertex_index = 0;
-    for (int i = 0; i < vertex_count; i += 1)
+    for (u32 i = 0; i < vertex_count; i += 1)
     {
         if (result.indices[i] == i)
         {
