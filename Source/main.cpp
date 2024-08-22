@@ -95,8 +95,8 @@ static void UpdateModelTransform ()
         - (glfwGetKey (g_main_window, GLFW_KEY_A) == GLFW_PRESS);
     move_input.y = (glfwGetKey (g_main_window, GLFW_KEY_E) == GLFW_PRESS)
         - (glfwGetKey (g_main_window, GLFW_KEY_Q) == GLFW_PRESS);
-    move_input.z = (glfwGetKey (g_main_window, GLFW_KEY_W) == GLFW_PRESS)
-        - (glfwGetKey (g_main_window, GLFW_KEY_S) == GLFW_PRESS);
+    move_input.z = (glfwGetKey (g_main_window, GLFW_KEY_S) == GLFW_PRESS)
+        - (glfwGetKey (g_main_window, GLFW_KEY_W) == GLFW_PRESS);
 
     move_input = Normalized (move_input);
 
