@@ -449,15 +449,19 @@ bool LoadMeshFromObjFile (const char *filename, Mesh *mesh, LoadMeshFlags flags)
         has_normals = true;
     }
 
-    if (tex_coords.count > 0 && has_normals && (flags & LoadMesh_CalculateTangents))
+    bool has_tex_coords = tex_coords.count > 0;
+    if (tex_coords.count == 0 && flags & LoadMesh_CalculateTexCoords)
+    {
+        CalculateBasicTexCoords (mesh);
+        has_tex_coords = true;
+    }
+
+    if (has_tex_coords && has_normals && (flags & LoadMesh_CalculateTangents))
     {
         CalculateTangents (mesh->vertices, mesh->vertex_count, mesh->indices, mesh->index_count);
     }
 
     CalculateBoundingBox (mesh);
-
-    if (tex_coords.count == 0 && flags & LoadMesh_CalculateTexCoords)
-        CalculateBasicTexCoords (mesh);
 
     GfxCreateMeshObjects (mesh);
 

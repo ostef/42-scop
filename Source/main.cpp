@@ -270,7 +270,8 @@ int main (int argc, char **argv)
 
     defer (DestroyMesh (&mesh));
 
-    g_camera.target = (mesh.aabb_min + mesh.aabb_max) * 0.5;
+    Vec3f center = (mesh.aabb_min + mesh.aabb_max) * 0.5;
+    g_camera.target = Vec3f{0,0,0};
     g_camera.distance_from_target = 3;
 
     bool space_pressed_last_frame = false;
@@ -307,8 +308,10 @@ int main (int argc, char **argv)
         params.texture = texture;
         params.texture_alpha = texture ? texture_alpha : 0.0f;
         params.model_color = Vec3f{1, 1, 1};
+
         params.model_matrix = Mat4fTranslate (g_model_position)
-            * Mat4fRotate (Vec3f{0,1,0}, ToRads (g_model_rotation));
+            * Mat4fRotate (Vec3f{0,1,0}, ToRads (g_model_rotation))
+            * Mat4fTranslate (-center);
         params.light_position = args.light_position;
         params.light_color = args.light_color;
 
