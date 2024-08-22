@@ -546,14 +546,13 @@ Mat4f Mat4fLookAt (const Vec3f &position, const Vec3f &target, const Vec3f &up)
     return result;
 }
 
-Mat4f Mat4fPerspectiveProjection (float fovy, float aspect, float znear, float zfar)
+Mat4f Mat4fPerspectiveProjection (float fovy, float aspect, float znear)
 {
     float t = tanf (ToRads (fovy) * 0.5f) * znear;
     float b = -t;
     float r = aspect * t;
     float l = -r;
     float n = znear;
-    float f = zfar;
 
     return Mat4f{
         2 * n / (r - l),               0, -(r + l) / (r - l),      0,
